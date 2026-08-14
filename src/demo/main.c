@@ -23,11 +23,51 @@ int main() {
 
 		EndDrawing();
 
+
+		addWindow(400, 600, (unsigned int []){20, 20});
+		addScroll(10, 10);
+		addScroll(10, 10);
+
+		printf("\n");
+		print_global_event_array();
+		printf("\n");
+
+		for (unsigned int i = 0; i < global_events.count; ++i) {
+			Event_Data base_event = global_events.items[i];
+			Rect base_rect = base_event.surface;
+			Color colour = GRAY;
+			if (base_event.type == WINDOW) {
+				colour = LIGHTGRAY;
+			}
+			DrawRectangle(base_rect.x, base_rect.y, 
+					base_rect.width, base_rect.height,
+					colour);
+
+			for (unsigned int j = 0; j < base_event.sub_surfaces.count; ++j) {
+				colour = BLUE;
+				Rect sub_rect = base_event.sub_surfaces.items[i];
+				DrawRectangle(sub_rect.x, sub_rect.y,
+					sub_rect.width, sub_rect.height,
+						colour);
+			}
+		}
+		global_events.count = 0;
+
+
 	}
 
 	printf("Hello, World\n");
 
 	CloseWindow();
+
+	for (unsigned int i = 0; i < global_events.count; ++i) {
+		Event_Data base_event = global_events.items[i];
+		for (unsigned int j = 0; j < base_event.sub_surfaces.count; ++j) {
+			Rect_Array sub_event = base_event.sub_surfaces;
+			free(sub_event.items);
+		}
+		free(global_events.items);
+	}
 
 	return 0;
 }

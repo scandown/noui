@@ -1,4 +1,6 @@
 #pragma once
+// column start - column end (EVENT feature);
+// defines how many columns they take up
 
 #include <stdlib.h>
 
@@ -48,6 +50,16 @@ typedef struct {
 } Event_Array;
 
 
+typedef struct {
+	unsigned int padding;
+	unsigned int element_spacing_y;
+} Style;
+
+
+Style global_default_style = {
+	.padding = 10,
+	.element_spacing_y = 30
+};
 
 
 Event_Array global_events = {0};
@@ -73,21 +85,54 @@ Event_Data global_events_get_root_window();
 unsigned int get_pixel_offset_from_last_node();
 
 Event_Data create_event(EVENT_TYPE type, unsigned int width, unsigned int height);
+Rect create_rect(EVENT_TYPE type, unsigned int x, unsigned int y,
+		 unsigned int width, unsigned int height);
 
 int addWindow(unsigned int width, unsigned int height, unsigned int pos[2]);
 int addScroll(unsigned int lower_bounds, unsigned int upper_bounds);
 
 
 
+#define NOUI_IMPLEMENTATION
 #ifdef NOUI_IMPLEMENTATION
+
+void print_event(Event_Data event) {
+	char *event_type;
+	switch (event.type) {
+		case WINDOW:
+			event_type = "WINDOW"; 
+			break;
+		case SCROLLBAR:
+			event_type = "SCROLLBAR";
+			break;
+		case CHECKBOX:
+			event_type = "CHECKBOX"; 
+			break;
+		case RADIOBOX: 
+			event_type = "RADIOBOX"; 
+			break;
+	}
+	printf("{EVENT_TYPE: %s, ", event_type);
+	printf("surface: {x: %u, y: %u, width: %u, height: %u}\n",
+			event.surface.x, event.surface.y,
+			event.surface.width, event.surface.height);
+}
+
+void print_global_event_array() {
+	for (unsigned int i = 0; i < global_events.count; ++i) {
+		print_event(global_events.items[i]);
+	}
+}
+
 Event_Data global_events_get_root_window() {
-	for (int i = global_events.count; i >= 0; --i) {
+	for (int i = global_events.count - 1; i >= 0; --i) {
 		if (global_events.items[i].type == WINDOW) {
 			return global_events.items[i];
 		}
 	}
 
 	Event_Data null_window = {0};
+
 
 	return null_window;
 }
@@ -101,30 +146,56 @@ unsigned int get_pixel_offset_from_last_node() {
 	return 0;
 }
 
+Rect create_rect(EVENT_TYPE type, unsigned int x, unsigned int y,
+		 unsigned int width, unsigned int height) {
+
+
+	unsigned int count = global_events.count;
+	unsigned int Y_OFFSET_GAP, X_OFFSET_GAP;
+
+	if (type == WINDOW) {
+		Rect rect = {
+			.x = x,
+			.y = y,
+			.width = width,
+			.height = height
+		};
+
+		return rect;
+	} else {
+		unsigned int initial_offset_y;
+		if (global_events.items[count-1].type == WINDOW) {
+			initial_offset_y = 0;
+		} else {
+			initial_offset_y = global_events.items[count-1].surface.height;
+		}
+		Y_OFFSET_GAP = initial_offset_y + global_default_style.element_spacing_y;
+		X_OFFSET_GAP = global_default_style.padding;
+		Event_Data root_window_event = global_events_get_root_window();
+		unsigned int accumulated_y_offset = get_pixel_offset_from_last_node();
+		Rect rect = {
+			.x = root_window_event.surface.x + X_OFFSET_GAP,
+			.y = accumulated_y_offset + Y_OFFSET_GAP,
+			.width = width,
+			.height = height
+		};
+		return rect;
+	}
+}
+
 Event_Data create_event(EVENT_TYPE type, unsigned int width, unsigned int height) {
 
 	if (type == WINDOW) {
 		Event_Data default_event = {
 			.type = type,
-			.surface = (Rect){
-				.width = width,
-				.height = height
-			},
+			.surface = create_rect(type, 0, 0, width, height),
 			.sub_surfaces = {0}
 		};
 		return default_event;
 	} else {
-		Event_Data root_window_event = global_events_get_root_window();
-		Root_Window root_window = root_window_event.root_window;
-		unsigned int accumulated_y_offset = get_pixel_offset_from_last_node();
 		Event_Data default_event = {
 			.type = type,
-			.surface = (Rect){
-				.x = root_window.column_size_px,
-				.y = accumulated_y_offset,
-				.width = width,
-				.height = height
-			},
+			.surface = create_rect(type, 0, 0, width, height),
 			.sub_surfaces = {0}
 		};
 		return default_event;
@@ -136,6 +207,8 @@ int addWindow(unsigned int width, unsigned int height, unsigned int pos[2]) {
 	Event_Data event = create_event(WINDOW, width, height);
 	event.surface.x = pos[0];
 	event.surface.y = pos[1];
+	event.root_window.is_valid = true;
+	event.root_window.column_size_px = 50;
 
 	DA_PUSH(global_events, event);
 	
