@@ -23,14 +23,13 @@ int main() {
 
 		EndDrawing();
 
+		bool mouse_pressed = false;
+		unsigned int mouse_position[2] = {GetMouseX(), GetMouseY()};
 
-		addWindow(400, 600, (unsigned int []){20, 20});
+		addWindow(400, 600, mouse_position, mouse_pressed, (unsigned int []){20, 20});
 		addScroll(10, 10);
 		addScroll(10, 10);
 
-		printf("\n");
-		print_global_event_array();
-		printf("\n");
 
 		for (unsigned int i = 0; i < global_events.count; ++i) {
 			Event_Data base_event = global_events.items[i];
@@ -45,10 +44,11 @@ int main() {
 
 			for (unsigned int j = 0; j < base_event.sub_surfaces.count; ++j) {
 				colour = BLUE;
-				Rect sub_rect = base_event.sub_surfaces.items[i];
+				Rect sub_rect = base_event.sub_surfaces.items[j];
 				DrawRectangle(sub_rect.x, sub_rect.y,
 					sub_rect.width, sub_rect.height,
 						colour);
+				print_rect(sub_rect);
 			}
 		}
 		global_events.count = 0;

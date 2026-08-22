@@ -3,6 +3,7 @@
 // defines how many columns they take up
 
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct {
 	int x;
@@ -18,6 +19,7 @@ typedef struct {
 typedef enum {
 	WINDOW,
 	SCROLLBAR,
+	SCROLLBAR_GIZMO,
 	CHECKBOX,
 	RADIOBOX
 } EVENT_TYPE;
@@ -29,9 +31,12 @@ typedef struct {
 } Rect_Array;
 
 typedef struct {
+	unsigned int mouse_position[2];
 	unsigned int columns;
 	unsigned int column_size_px;
 	bool is_valid;
+
+	bool mouse_pressed;
 } Root_Window;
 
 typedef struct {
@@ -88,7 +93,9 @@ Event_Data create_event(EVENT_TYPE type, unsigned int width, unsigned int height
 Rect create_rect(EVENT_TYPE type, unsigned int x, unsigned int y,
 		 unsigned int width, unsigned int height);
 
-int addWindow(unsigned int width, unsigned int height, unsigned int pos[2]);
+int addWindow(unsigned int width, unsigned int height, 
+		unsigned int mouse_position[2], bool mouse_pressed,
+		unsigned int pos[2]);
 int addScroll(unsigned int lower_bounds, unsigned int upper_bounds);
 
 
@@ -104,6 +111,9 @@ void print_event(Event_Data event) {
 			break;
 		case SCROLLBAR:
 			event_type = "SCROLLBAR";
+			break;
+		case SCROLLBAR_GIZMO:
+			event_type = "SCROLLBAR_GIZMO";
 			break;
 		case CHECKBOX:
 			event_type = "CHECKBOX"; 
@@ -122,6 +132,10 @@ void print_global_event_array() {
 	for (unsigned int i = 0; i < global_events.count; ++i) {
 		print_event(global_events.items[i]);
 	}
+}
+void print_rect(Rect rect) {
+	printf("x: %d, y: %d, width: %d, height: %d\n",
+			rect.x, rect.y, rect.width, rect.height);
 }
 
 Event_Data global_events_get_root_window() {
@@ -146,7 +160,7 @@ unsigned int get_pixel_offset_from_last_node() {
 	return 0;
 }
 
-Rect create_rect(EVENT_TYPE type, unsigned int x, unsigned int y,
+Rect create_rect(EVENT_TYPE type, unsigned int local_x, unsigned int local_y,
 		 unsigned int width, unsigned int height) {
 
 
@@ -155,8 +169,8 @@ Rect create_rect(EVENT_TYPE type, unsigned int x, unsigned int y,
 
 	if (type == WINDOW) {
 		Rect rect = {
-			.x = x,
-			.y = y,
+			.x = local_x,
+			.y = local_y,
 			.width = width,
 			.height = height
 		};
@@ -174,8 +188,8 @@ Rect create_rect(EVENT_TYPE type, unsigned int x, unsigned int y,
 		Event_Data root_window_event = global_events_get_root_window();
 		unsigned int accumulated_y_offset = get_pixel_offset_from_last_node();
 		Rect rect = {
-			.x = root_window_event.surface.x + X_OFFSET_GAP,
-			.y = accumulated_y_offset + Y_OFFSET_GAP,
+			.x = local_x + root_window_event.surface.x + X_OFFSET_GAP,
+			.y = local_y + accumulated_y_offset + Y_OFFSET_GAP,
 			.width = width,
 			.height = height
 		};
@@ -202,13 +216,20 @@ Event_Data create_event(EVENT_TYPE type, unsigned int width, unsigned int height
 	}
 }
 
-int addWindow(unsigned int width, unsigned int height, unsigned int pos[2]) {
+int addWindow(unsigned int width, unsigned int height, 
+		unsigned int mouse_position[2], bool mouse_pressed,
+		unsigned int pos[2]) {
 
 	Event_Data event = create_event(WINDOW, width, height);
 	event.surface.x = pos[0];
 	event.surface.y = pos[1];
 	event.root_window.is_valid = true;
 	event.root_window.column_size_px = 50;
+
+	memcpy(event.root_window.mouse_position, mouse_position,
+			sizeof(unsigned int) * 2);
+
+	event.root_window.mouse_pressed = mouse_pressed;
 
 	DA_PUSH(global_events, event);
 	
@@ -236,13 +257,17 @@ int addScroll(unsigned int lower_bounds, unsigned int upper_bounds) {
 	Event_Data event = create_event(SCROLLBAR, width, SCROLLBAR_HEIGHT);
 
 
-	Rect scrollbar_gizmo = {
-		.width = GIZMO_WIDTH,
-		.height = GIZMO_HEIGHT
-	};
+	unsigned int *mouse_pos = root_window.mouse_position;
+	printf("%d, %d\n", mouse_pos[0], mouse_pos[1]);
+
+	unsigned int gizmo_position_x = mouse_pos[0];
+
+	Rect scrollbar_gizmo = create_rect(SCROLLBAR_GIZMO,
+			gizmo_position_x, 0, GIZMO_WIDTH, GIZMO_HEIGHT);
 
 	DA_PUSH(event.sub_surfaces, scrollbar_gizmo);
 	DA_PUSH(global_events, event);
+
 
 	return 0;
 }
