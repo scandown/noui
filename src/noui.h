@@ -56,18 +56,24 @@ typedef struct {
 
 
 typedef struct {
-	unsigned int padding;
+	unsigned int padding_x;
 	unsigned int element_spacing_y;
 } Style;
 
 
 Style global_default_style = {
-	.padding = 10,
+	.padding_x = 10,
 	.element_spacing_y = 30
 };
 
 
 Event_Array global_events = {0};
+
+int clamp(int value, int min, int max) {
+  const int t = value < min ? min : value;
+  return t > max ? max : t;
+}
+
 
 #define UNUSED(x) (void)x
 
@@ -85,6 +91,12 @@ Event_Array global_events = {0};
 	arr.items[arr.count++] = number; \
 	} while (0)
 
+unsigned int get_previous_element_offset_x();
+unsigned int get_previous_element_offset_y();
+unsigned int get_previous_element_offset_width();
+unsigned int get_previous_element_offset_height();
+void print_global_event_array();
+void print_rect(Rect rect);
 
 Event_Data global_events_get_root_window();
 unsigned int get_pixel_offset_from_last_node();
@@ -128,6 +140,34 @@ void print_event(Event_Data event) {
 			event.surface.width, event.surface.height);
 }
 
+
+unsigned int get_previous_element_offset_x() {
+	Event_Data event = global_events.items[global_events.count-1];
+
+	if (event.type == WINDOW) return 0;
+	return event.surface.x;
+}
+
+unsigned int get_previous_element_offset_y() {
+	Event_Data event = global_events.items[global_events.count-1];
+
+	if (event.type == WINDOW) return 0;
+	return event.surface.y;
+}
+
+unsigned int get_previous_element_offset_width() {
+	Event_Data event = global_events.items[global_events.count-1];
+
+	if (event.type == WINDOW) return 0;
+	return event.surface.width;
+}
+unsigned int get_previous_element_offset_height() {
+	Event_Data event = global_events.items[global_events.count-1];
+
+	if (event.type == WINDOW) return 0;
+	return event.surface.height;
+}
+
 void print_global_event_array() {
 	for (unsigned int i = 0; i < global_events.count; ++i) {
 		print_event(global_events.items[i]);
@@ -160,11 +200,10 @@ unsigned int get_pixel_offset_from_last_node() {
 	return 0;
 }
 
+
 Rect create_rect(EVENT_TYPE type, unsigned int local_x, unsigned int local_y,
 		 unsigned int width, unsigned int height) {
 
-
-	unsigned int count = global_events.count;
 	unsigned int Y_OFFSET_GAP, X_OFFSET_GAP;
 
 	if (type == WINDOW) {
@@ -177,14 +216,10 @@ Rect create_rect(EVENT_TYPE type, unsigned int local_x, unsigned int local_y,
 
 		return rect;
 	} else {
-		unsigned int initial_offset_y;
-		if (global_events.items[count-1].type == WINDOW) {
-			initial_offset_y = 0;
-		} else {
-			initial_offset_y = global_events.items[count-1].surface.height;
-		}
+		unsigned int initial_offset_y = get_previous_element_offset_height();
+
 		Y_OFFSET_GAP = initial_offset_y + global_default_style.element_spacing_y;
-		X_OFFSET_GAP = global_default_style.padding;
+		X_OFFSET_GAP = global_default_style.padding_x;
 		Event_Data root_window_event = global_events_get_root_window();
 		unsigned int accumulated_y_offset = get_pixel_offset_from_last_node();
 		Rect rect = {
@@ -258,9 +293,15 @@ int addScroll(unsigned int lower_bounds, unsigned int upper_bounds) {
 
 
 	unsigned int *mouse_pos = root_window.mouse_position;
-	printf("%d, %d\n", mouse_pos[0], mouse_pos[1]);
 
-	unsigned int gizmo_position_x = mouse_pos[0];
+	unsigned int element_offset = root_window_event.surface.x +
+		global_default_style.padding_x;
+
+
+
+	unsigned int gizmo_position_x = 
+		clamp(mouse_pos[0] - element_offset - GIZMO_WIDTH/2,
+			0, event.surface.width - GIZMO_WIDTH / 2);
 
 	Rect scrollbar_gizmo = create_rect(SCROLLBAR_GIZMO,
 			gizmo_position_x, 0, GIZMO_WIDTH, GIZMO_HEIGHT);

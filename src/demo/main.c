@@ -48,7 +48,6 @@ int main() {
 				DrawRectangle(sub_rect.x, sub_rect.y,
 					sub_rect.width, sub_rect.height,
 						colour);
-				print_rect(sub_rect);
 			}
 		}
 		global_events.count = 0;
@@ -56,7 +55,6 @@ int main() {
 
 	}
 
-	printf("Hello, World\n");
 
 	CloseWindow();
 
