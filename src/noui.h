@@ -32,8 +32,6 @@ typedef struct {
 	unsigned int columns;
 	unsigned int column_size_px;
 	bool is_valid;
-
-	bool mouse_pressed;
 } Root_Window;
 
 typedef struct {
@@ -51,6 +49,14 @@ unsigned int sub_surfaces_iter = 0;
 unsigned int sub_surfaces_iter_checks = 0;
 unsigned int global_events_iter = 0;
 unsigned int global_events_iter_checks = 0;
+
+
+typedef struct {
+	Rect *collided_button_id;
+	bool is_button_selected;
+} NOUI_CONTEXT;
+
+NOUI_CONTEXT NOUI_CTX = {0};
 
 
 typedef struct {
@@ -104,7 +110,7 @@ Rect create_rect(EVENT_TYPE type, unsigned int x, unsigned int y,
 		 unsigned int width, unsigned int height);
 
 int addWindow(unsigned int width, unsigned int height, 
-		unsigned int mouse_position[2], bool mouse_pressed,
+		unsigned int mouse_position[2],
 		unsigned int pos[2]);
 int addScroll(unsigned int lower_bounds, unsigned int upper_bounds);
 
@@ -248,7 +254,7 @@ Event_Data create_event(EVENT_TYPE type, unsigned int width, unsigned int height
 }
 
 int addWindow(unsigned int width, unsigned int height, 
-		unsigned int mouse_position[2], bool mouse_pressed,
+		unsigned int mouse_position[2],
 		unsigned int pos[2]) {
 
 	Event_Data event = create_event(WINDOW, width, height);
@@ -259,8 +265,6 @@ int addWindow(unsigned int width, unsigned int height,
 
 	memcpy(event.root_window.mouse_position, mouse_position,
 			sizeof(unsigned int) * 2);
-
-	event.root_window.mouse_pressed = mouse_pressed;
 
 	global_events[global_events_iter] = event;
 	global_events[global_events_iter_checks] = event;
@@ -328,9 +332,16 @@ int addScroll(unsigned int lower_bounds, unsigned int upper_bounds) {
 			sub_surfaces[sub_surfaces_iter_checks],
 			(int *)mouse_pos);
 
-	if (collision) {
+	if (collision && NOUI_CTX.is_button_selected &&
+			NOUI_CTX.collided_button_id == NULL) {
+		NOUI_CTX.collided_button_id = &sub_surfaces[sub_surfaces_iter_checks];
+		NOUI_CTX.is_button_selected = true;
+	}
+
+	if (NOUI_CTX.is_button_selected &&
+		NOUI_CTX.collided_button_id == &sub_surfaces[sub_surfaces_iter_checks]) {
+
 		sub_surfaces[sub_surfaces_iter_checks] = scrollbar_gizmo;
-		printf("%d\n", gizmo_position_x);
 	}
 	global_events[global_events_iter] = event;
 

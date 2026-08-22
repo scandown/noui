@@ -23,15 +23,24 @@ int main() {
 
 		EndDrawing();
 
-		bool mouse_pressed = false;
+		bool mouse_down = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
 		unsigned int mouse_position[2] = {GetMouseX(), GetMouseY()};
 		//global_events_iter = 0;
 		//sub_surfaces_iter = 0;
 		sub_surfaces_iter_checks = 0;
 		global_events_iter_checks = 0;
 
+		if (!mouse_down) {
+			NOUI_CTX.is_button_selected = false;
+			NOUI_CTX.collided_button_id = NULL;
+		}
+		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+			NOUI_CTX.is_button_selected = true;
+		}
+		printf("M\n");
+
 		static bool init = true;
-		addWindow(400, 600, mouse_position, mouse_pressed, (unsigned int []){20, 20});
+		addWindow(400, 600, mouse_position, (unsigned int []){20, 20});
 		global_events_iter_checks++;
 		if (init) {
 			global_events_iter++;
