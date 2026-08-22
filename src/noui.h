@@ -24,11 +24,8 @@ typedef enum {
 	RADIOBOX
 } EVENT_TYPE;
 
-typedef struct {
-	Rect *items;
-	unsigned int count;
-	unsigned int capacity;
-} Rect_Array;
+
+#define EVENT_MAX_SIZE 256
 
 typedef struct {
 	unsigned int mouse_position[2];
@@ -42,17 +39,18 @@ typedef struct {
 typedef struct {
 	EVENT_TYPE type;
 	Rect surface;
-	Rect_Array sub_surfaces;
 
 	// WINDOW type data
 	Root_Window root_window;
 } Event_Data;
 
-typedef struct {
-	Event_Data *items;
-	unsigned int count;
-	unsigned int capacity;
-} Event_Array;
+Event_Data global_events[EVENT_MAX_SIZE];
+Rect sub_surfaces[EVENT_MAX_SIZE];
+
+unsigned int sub_surfaces_iter = 0;
+unsigned int sub_surfaces_iter_checks = 0;
+unsigned int global_events_iter = 0;
+unsigned int global_events_iter_checks = 0;
 
 
 typedef struct {
@@ -67,7 +65,7 @@ Style global_default_style = {
 };
 
 
-Event_Array global_events = {0};
+//Event_Array global_events = {0};
 
 int clamp(int value, int min, int max) {
   const int t = value < min ? min : value;
@@ -142,35 +140,35 @@ void print_event(Event_Data event) {
 
 
 unsigned int get_previous_element_offset_x() {
-	Event_Data event = global_events.items[global_events.count-1];
+	Event_Data event = global_events[global_events_iter_checks-1];
 
 	if (event.type == WINDOW) return 0;
 	return event.surface.x;
 }
 
 unsigned int get_previous_element_offset_y() {
-	Event_Data event = global_events.items[global_events.count-1];
+	Event_Data event = global_events[global_events_iter_checks-1];
 
 	if (event.type == WINDOW) return 0;
 	return event.surface.y;
 }
 
 unsigned int get_previous_element_offset_width() {
-	Event_Data event = global_events.items[global_events.count-1];
+	Event_Data event = global_events[global_events_iter_checks-1];
 
 	if (event.type == WINDOW) return 0;
 	return event.surface.width;
 }
 unsigned int get_previous_element_offset_height() {
-	Event_Data event = global_events.items[global_events.count-1];
+	Event_Data event = global_events[global_events_iter_checks-1];
 
 	if (event.type == WINDOW) return 0;
 	return event.surface.height;
 }
 
 void print_global_event_array() {
-	for (unsigned int i = 0; i < global_events.count; ++i) {
-		print_event(global_events.items[i]);
+	for (unsigned int i = 0; i < global_events_iter_checks; ++i) {
+		print_event(global_events[i]);
 	}
 }
 void print_rect(Rect rect) {
@@ -179,9 +177,9 @@ void print_rect(Rect rect) {
 }
 
 Event_Data global_events_get_root_window() {
-	for (int i = global_events.count - 1; i >= 0; --i) {
-		if (global_events.items[i].type == WINDOW) {
-			return global_events.items[i];
+	for (int i = global_events_iter - 1; i >= 0; --i) {
+		if (global_events[i].type == WINDOW) {
+			return global_events[i];
 		}
 	}
 
@@ -192,9 +190,9 @@ Event_Data global_events_get_root_window() {
 }
 
 unsigned int get_pixel_offset_from_last_node() {
-	unsigned int count = global_events.count;
+	unsigned int count = global_events_iter_checks;
 	if (count > 0) {
-		unsigned int accumulated_y_offset = global_events.items[count-1].surface.y;
+		unsigned int accumulated_y_offset = global_events[count-1].surface.y;
 		return accumulated_y_offset;
 	}
 	return 0;
@@ -238,14 +236,12 @@ Event_Data create_event(EVENT_TYPE type, unsigned int width, unsigned int height
 		Event_Data default_event = {
 			.type = type,
 			.surface = create_rect(type, 0, 0, width, height),
-			.sub_surfaces = {0}
 		};
 		return default_event;
 	} else {
 		Event_Data default_event = {
 			.type = type,
 			.surface = create_rect(type, 0, 0, width, height),
-			.sub_surfaces = {0}
 		};
 		return default_event;
 	}
@@ -266,9 +262,22 @@ int addWindow(unsigned int width, unsigned int height,
 
 	event.root_window.mouse_pressed = mouse_pressed;
 
-	DA_PUSH(global_events, event);
+	global_events[global_events_iter] = event;
+	global_events[global_events_iter_checks] = event;
 	
 	return 0;
+}
+
+bool AABB_element_check(Rect AABB, int position[2]) {
+	bool x, y;
+	if (position[0] > AABB.x && position[0] < AABB.x + AABB.width) {
+		x = true;
+	}
+	if (position[1] > AABB.y && position[1] < AABB.y + AABB.height) {
+		y = true;
+	}
+
+	return x && y;
 }
 
 int addScroll(unsigned int lower_bounds, unsigned int upper_bounds) {
@@ -306,8 +315,24 @@ int addScroll(unsigned int lower_bounds, unsigned int upper_bounds) {
 	Rect scrollbar_gizmo = create_rect(SCROLLBAR_GIZMO,
 			gizmo_position_x, 0, GIZMO_WIDTH, GIZMO_HEIGHT);
 
-	DA_PUSH(event.sub_surfaces, scrollbar_gizmo);
-	DA_PUSH(global_events, event);
+	static int f = 0;
+	if (f < 30) {
+		printf("%d\n", scrollbar_gizmo.y);
+	}
+	f++;
+
+
+	sub_surfaces[sub_surfaces_iter] = scrollbar_gizmo;
+
+	bool collision = AABB_element_check(
+			sub_surfaces[sub_surfaces_iter_checks],
+			(int *)mouse_pos);
+
+	if (collision) {
+		sub_surfaces[sub_surfaces_iter_checks] = scrollbar_gizmo;
+		printf("%d\n", gizmo_position_x);
+	}
+	global_events[global_events_iter] = event;
 
 
 	return 0;

@@ -25,14 +25,36 @@ int main() {
 
 		bool mouse_pressed = false;
 		unsigned int mouse_position[2] = {GetMouseX(), GetMouseY()};
+		//global_events_iter = 0;
+		//sub_surfaces_iter = 0;
+		sub_surfaces_iter_checks = 0;
+		global_events_iter_checks = 0;
 
+		static bool init = true;
 		addWindow(400, 600, mouse_position, mouse_pressed, (unsigned int []){20, 20});
+		global_events_iter_checks++;
+		if (init) {
+			global_events_iter++;
+		}
 		addScroll(10, 10);
+		sub_surfaces_iter_checks++;
+		global_events_iter_checks++;
+		if (init) {
+			global_events_iter++;
+			sub_surfaces_iter++;
+		}
+
 		addScroll(10, 10);
+		sub_surfaces_iter_checks++;
+		global_events_iter_checks++;
+		if (init) {
+			global_events_iter++;
+			sub_surfaces_iter++;
+		}
 
 
-		for (unsigned int i = 0; i < global_events.count; ++i) {
-			Event_Data base_event = global_events.items[i];
+		for (unsigned int i = 0; i < global_events_iter; ++i) {
+			Event_Data base_event = global_events[i];
 			Rect base_rect = base_event.surface;
 			Color colour = GRAY;
 			if (base_event.type == WINDOW) {
@@ -42,15 +64,20 @@ int main() {
 					base_rect.width, base_rect.height,
 					colour);
 
-			for (unsigned int j = 0; j < base_event.sub_surfaces.count; ++j) {
+			for (unsigned int j = 0; j < sub_surfaces_iter; ++j) {
 				colour = BLUE;
-				Rect sub_rect = base_event.sub_surfaces.items[j];
+				Rect sub_rect = sub_surfaces[j];
 				DrawRectangle(sub_rect.x, sub_rect.y,
 					sub_rect.width, sub_rect.height,
 						colour);
 			}
 		}
-		global_events.count = 0;
+		init = false;
+
+		/*
+		global_events_iter = 0;
+		sub_surfaces_iter = 0;
+		*/
 
 
 	}
@@ -58,13 +85,13 @@ int main() {
 
 	CloseWindow();
 
-	for (unsigned int i = 0; i < global_events.count; ++i) {
-		Event_Data base_event = global_events.items[i];
-		for (unsigned int j = 0; j < base_event.sub_surfaces.count; ++j) {
-			Rect_Array sub_event = base_event.sub_surfaces;
-			free(sub_event.items);
+	for (unsigned int i = 0; i < global_events_iter; ++i) {
+		//Event_Data base_event = global_events[i];
+		for (unsigned int j = 0; j < sub_surfaces_iter; ++j) {
+			//Rect_Array sub_event = sub_surfaces;
+			//free(sub_event.items);
 		}
-		free(global_events.items);
+		//free(global_events.items);
 	}
 
 	return 0;
