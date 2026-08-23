@@ -28,7 +28,7 @@ typedef enum {
 #define EVENT_MAX_SIZE 256
 
 typedef struct {
-	unsigned int mouse_position[2];
+	int mouse_position[2];
 	unsigned int columns;
 	unsigned int column_size_px;
 	bool is_valid;
@@ -40,6 +40,8 @@ typedef struct {
 
 	// WINDOW type data
 	Root_Window root_window;
+
+	bool checked;
 } Event_Data;
 
 Event_Data global_events[EVENT_MAX_SIZE];
@@ -54,6 +56,7 @@ unsigned int global_events_iter_checks = 0;
 typedef struct {
 	Rect *collided_button_id;
 	bool is_button_selected;
+	bool pressed_once;
 } NOUI_CONTEXT;
 
 NOUI_CONTEXT NOUI_CTX = {0};
@@ -101,6 +104,8 @@ unsigned int get_previous_element_offset_width();
 unsigned int get_previous_element_offset_height();
 void print_global_event_array();
 void print_rect(Rect rect);
+
+bool AABB_element_check(Rect AABB, int position[2]);
 
 Event_Data global_events_get_root_window();
 unsigned int get_pixel_offset_from_last_node();
@@ -273,7 +278,8 @@ int addWindow(unsigned int width, unsigned int height,
 }
 
 bool AABB_element_check(Rect AABB, int position[2]) {
-	bool x, y;
+	bool x = false;
+	bool y = false;
 	if (position[0] > AABB.x && position[0] < AABB.x + AABB.width) {
 		x = true;
 	}
@@ -305,7 +311,7 @@ int addScroll(unsigned int lower_bounds, unsigned int upper_bounds) {
 	Event_Data event = create_event(SCROLLBAR, width, SCROLLBAR_HEIGHT);
 
 
-	unsigned int *mouse_pos = root_window.mouse_position;
+	int *mouse_pos = root_window.mouse_position;
 
 	unsigned int element_offset = root_window_event.surface.x +
 		global_default_style.padding_x;
@@ -319,31 +325,73 @@ int addScroll(unsigned int lower_bounds, unsigned int upper_bounds) {
 	Rect scrollbar_gizmo = create_rect(SCROLLBAR_GIZMO,
 			gizmo_position_x, 0, GIZMO_WIDTH, GIZMO_HEIGHT);
 
-	static int f = 0;
-	if (f < 30) {
-		printf("%d\n", scrollbar_gizmo.y);
-	}
-	f++;
-
 
 	sub_surfaces[sub_surfaces_iter] = scrollbar_gizmo;
 
 	bool collision = AABB_element_check(
 			sub_surfaces[sub_surfaces_iter_checks],
-			(int *)mouse_pos);
+			mouse_pos);
 
-	if (collision && NOUI_CTX.is_button_selected &&
-			NOUI_CTX.collided_button_id == NULL) {
-		NOUI_CTX.collided_button_id = &sub_surfaces[sub_surfaces_iter_checks];
-		NOUI_CTX.is_button_selected = true;
+	Rect *current_rect_id = &sub_surfaces[sub_surfaces_iter_checks];
+	if (collision && NOUI_CTX.collided_button_id == NULL) {
+		NOUI_CTX.collided_button_id = current_rect_id;
 	}
 
 	if (NOUI_CTX.is_button_selected &&
-		NOUI_CTX.collided_button_id == &sub_surfaces[sub_surfaces_iter_checks]) {
+		NOUI_CTX.collided_button_id == current_rect_id) {
 
 		sub_surfaces[sub_surfaces_iter_checks] = scrollbar_gizmo;
 	}
 	global_events[global_events_iter] = event;
+
+
+	return 0;
+}
+
+int addCheckbox(){
+
+	const unsigned int BOX_SIZE = 20;
+
+	Event_Data root_window_event = global_events_get_root_window();
+	Root_Window root_window = root_window_event.root_window;
+
+	if (!root_window.is_valid) {
+		fprintf(stderr, "Error: No root_window\n");
+		return -1;
+	}
+
+	Event_Data event = create_event(CHECKBOX, BOX_SIZE, BOX_SIZE);
+
+
+	int *mouse_pos = root_window.mouse_position;
+
+
+
+	global_events[global_events_iter] = event;
+
+	bool collision = AABB_element_check(
+			global_events[global_events_iter_checks].surface,
+			(int *)mouse_pos);
+
+	Rect *current_rect_id = &global_events[global_events_iter_checks].surface;
+
+	if (collision && NOUI_CTX.collided_button_id == NULL) {
+		NOUI_CTX.collided_button_id = current_rect_id;
+	}
+
+	if (NOUI_CTX.is_button_selected &&
+		NOUI_CTX.collided_button_id == current_rect_id &&
+		!NOUI_CTX.pressed_once) {
+
+		NOUI_CTX.pressed_once = true;
+
+
+		event.checked = !event.checked;
+
+		bool flipped_check = !global_events[global_events_iter_checks].checked;
+		event.checked = flipped_check;
+		global_events[global_events_iter_checks] = event;
+	}
 
 
 	return 0;

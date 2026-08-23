@@ -33,11 +33,11 @@ int main() {
 		if (!mouse_down) {
 			NOUI_CTX.is_button_selected = false;
 			NOUI_CTX.collided_button_id = NULL;
+			NOUI_CTX.pressed_once = false;
 		}
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 			NOUI_CTX.is_button_selected = true;
 		}
-		printf("M\n");
 
 		static bool init = true;
 		addWindow(400, 600, mouse_position, (unsigned int []){20, 20});
@@ -61,6 +61,19 @@ int main() {
 			sub_surfaces_iter++;
 		}
 
+		addCheckbox();
+		global_events_iter_checks++;
+		if (init) {
+			global_events_iter++;
+		}
+
+		addCheckbox();
+		global_events_iter_checks++;
+		if (init) {
+			global_events_iter++;
+		}
+
+
 
 		for (unsigned int i = 0; i < global_events_iter; ++i) {
 			Event_Data base_event = global_events[i];
@@ -68,6 +81,13 @@ int main() {
 			Color colour = GRAY;
 			if (base_event.type == WINDOW) {
 				colour = LIGHTGRAY;
+			}
+
+			else if (base_event.type == CHECKBOX) {
+				colour = RED;
+				if (base_event.checked) {
+					colour = GREEN;
+				}
 			}
 			DrawRectangle(base_rect.x, base_rect.y, 
 					base_rect.width, base_rect.height,
