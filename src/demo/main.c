@@ -10,6 +10,10 @@ void draw_text_game();
 
 int main() {
 
+	NOUI_CTX.is_button_selected = false;
+	NOUI_CTX.collided_button_id = NULL;
+	NOUI_CTX.pressed_once = false;
+
 	InitWindow(SCR_WIDTH, SCR_HEIGHT, "UI demo");
 
 
@@ -24,9 +28,9 @@ int main() {
 		EndDrawing();
 
 		bool mouse_down = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
-		unsigned int mouse_position[2] = {GetMouseX(), GetMouseY()};
-		//global_events_iter = 0;
-		//sub_surfaces_iter = 0;
+		int mouse_position[2] = {GetMouseX(), GetMouseY()};
+		NOUI_CTX.mouse_position[0] = mouse_position[0];
+		NOUI_CTX.mouse_position[1] = mouse_position[1];
 		sub_surfaces_iter_checks = 0;
 		global_events_iter_checks = 0;
 
@@ -39,39 +43,25 @@ int main() {
 			NOUI_CTX.is_button_selected = true;
 		}
 
-		static bool init = true;
-		addWindow(400, 600, mouse_position, (unsigned int []){20, 20});
-		global_events_iter_checks++;
-		if (init) {
-			global_events_iter++;
-		}
-		addScroll(10, 10);
-		sub_surfaces_iter_checks++;
-		global_events_iter_checks++;
-		if (init) {
-			global_events_iter++;
-			sub_surfaces_iter++;
-		}
 
-		addScroll(10, 10);
-		sub_surfaces_iter_checks++;
-		global_events_iter_checks++;
-		if (init) {
-			global_events_iter++;
-			sub_surfaces_iter++;
-		}
+		addWindow(400, 600, (unsigned int []){20, 20});
+
+		// setColumn(1) -- set which column to start 
+		// resetRow(); -- set it back to the top rather
+		//		  than at the row the last ui
+		//		  element was at
+
+		if (addScroll(10, 10)) printf("SCROLLBAR 1\n");
+
+		if (addScroll(10, 10)) printf("SCROLLBAR 2\n");
 
 		addCheckbox();
-		global_events_iter_checks++;
-		if (init) {
-			global_events_iter++;
+
+		int num = -1;
+		if ((num = addRadiobox(3)) > -1) {
+			printf("CLICKED %d\n", num);
 		}
 
-		addCheckbox();
-		global_events_iter_checks++;
-		if (init) {
-			global_events_iter++;
-		}
 
 
 
@@ -88,6 +78,11 @@ int main() {
 				if (base_event.checked) {
 					colour = GREEN;
 				}
+			} else if (base_event.type == RADIOBOX) {
+				colour = ORANGE;
+				if (base_event.checked) {
+					colour = BLUE;
+				}
 			}
 			DrawRectangle(base_rect.x, base_rect.y, 
 					base_rect.width, base_rect.height,
@@ -101,27 +96,13 @@ int main() {
 						colour);
 			}
 		}
-		init = false;
 
-		/*
-		global_events_iter = 0;
-		sub_surfaces_iter = 0;
-		*/
-
+		NOUI_init = false;
 
 	}
 
 
 	CloseWindow();
-
-	for (unsigned int i = 0; i < global_events_iter; ++i) {
-		//Event_Data base_event = global_events[i];
-		for (unsigned int j = 0; j < sub_surfaces_iter; ++j) {
-			//Rect_Array sub_event = sub_surfaces;
-			//free(sub_event.items);
-		}
-		//free(global_events.items);
-	}
 
 	return 0;
 }
