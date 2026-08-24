@@ -14,6 +14,7 @@ typedef struct {
 
 typedef enum {
 	WINDOW,
+	TEXT,
 	SCROLLBAR,
 	SCROLLBAR_GIZMO,
 	CHECKBOX,
@@ -30,10 +31,6 @@ typedef struct {
 } Root_Window;
 
 
-// radiobox number
-// starts at 0 and ends when the next event
-// number is 0
-
 typedef struct {
 	EVENT_TYPE type;
 	Rect surface;
@@ -41,7 +38,11 @@ typedef struct {
 	// WINDOW type data
 	Root_Window root_window;
 
+	char *text;
+	unsigned int text_length;
+
 	int radiobox_number;
+
 	bool checked;
 } Event_Data;
 
@@ -68,12 +69,16 @@ NOUI_CONTEXT NOUI_CTX = {0};
 typedef struct {
 	unsigned int padding_x;
 	unsigned int element_spacing_y;
+	unsigned int row_height;
+	unsigned int gizmo_width;
 } Style;
 
 
 Style global_default_style = {
 	.padding_x = 10,
-	.element_spacing_y = 30
+	.element_spacing_y = 30,
+	.row_height = 20,
+	.gizmo_width = 10
 };
 
 
@@ -113,13 +118,19 @@ bool AABB_element_check(Rect AABB, int position[2]);
 Event_Data global_events_get_root_window();
 unsigned int get_pixel_offset_from_last_node();
 
-Event_Data create_event(EVENT_TYPE type, unsigned int width, unsigned int height);
+Event_Data create_event(EVENT_TYPE type, unsigned int width, unsigned int height,
+			char *text, unsigned int text_length);
+
 Rect create_rect(EVENT_TYPE type, unsigned int x, unsigned int y,
 		 unsigned int width, unsigned int height);
 
+int addText(char *text, unsigned int text_width, unsigned int text_height,
+		unsigned int text_length);
 int addWindow(unsigned int width, unsigned int height, unsigned int pos[2]);
-int addScroll(unsigned int lower_bounds, unsigned int upper_bounds);
 
+int addScroll(unsigned int lower_bounds, unsigned int upper_bounds);
+int addCheckbox();
+int addRadiobox(int number_of_boxes);
 
 
 #define NOUI_IMPLEMENTATION
@@ -130,6 +141,9 @@ void print_event(Event_Data event) {
 	switch (event.type) {
 		case WINDOW:
 			event_type = "WINDOW"; 
+			break;
+		case TEXT:
+			event_type = "TEXT";
 			break;
 		case SCROLLBAR:
 			event_type = "SCROLLBAR";
@@ -145,7 +159,7 @@ void print_event(Event_Data event) {
 			break;
 	}
 	printf("{EVENT_TYPE: %s, ", event_type);
-	printf("surface: {x: %u, y: %u, width: %u, height: %u},",
+	printf("surface: {x: %u, y: %u, width: %u, height: %u}, ",
 			event.surface.x, event.surface.y,
 			event.surface.width, event.surface.height);
 	printf("checked: %d\n", event.checked);
@@ -202,10 +216,22 @@ Event_Data global_events_get_root_window() {
 	return null_window;
 }
 
-unsigned int get_pixel_offset_from_last_node() {
+Event_Data global_events_get_previous_node(unsigned int number_of_nodes_back) {
 	unsigned int count = global_events_iter_checks;
 	if (count > 0) {
-		unsigned int accumulated_y_offset = global_events[count-1].surface.y;
+		return global_events[count-number_of_nodes_back];
+	}
+
+	Event_Data null_event = {0};
+
+	return null_event;
+}
+
+unsigned int get_pixel_offset_from_last_node(unsigned int number_of_nodes_back) {
+	unsigned int count = global_events_iter_checks;
+	Event_Data event = global_events_get_previous_node(number_of_nodes_back);
+	if (count > 0) {
+		unsigned int accumulated_y_offset = event.surface.y;
 		return accumulated_y_offset;
 	}
 	return 0;
@@ -232,9 +258,19 @@ Rect create_rect(EVENT_TYPE type, unsigned int local_x, unsigned int local_y,
 		Y_OFFSET_GAP = initial_offset_y + global_default_style.element_spacing_y;
 		X_OFFSET_GAP = global_default_style.padding_x;
 		Event_Data root_window_event = global_events_get_root_window();
-		unsigned int accumulated_y_offset = get_pixel_offset_from_last_node();
+		unsigned int accumulated_y_offset = get_pixel_offset_from_last_node(1);
+		Event_Data previous_event = global_events_get_previous_node(1);
+		unsigned int accumulated_x_offset;
+		if (previous_event.type != TEXT) {
+			accumulated_x_offset = 0;
+		} else {
+			accumulated_x_offset = previous_event.surface.width +
+				global_default_style.padding_x;	
+			accumulated_y_offset = get_pixel_offset_from_last_node(2);
+		}
 		Rect rect = {
-			.x = local_x + root_window_event.surface.x + X_OFFSET_GAP,
+			.x = local_x + accumulated_x_offset + 
+				root_window_event.surface.x + X_OFFSET_GAP,
 			.y = local_y + accumulated_y_offset + Y_OFFSET_GAP,
 			.width = width,
 			.height = height
@@ -243,26 +279,37 @@ Rect create_rect(EVENT_TYPE type, unsigned int local_x, unsigned int local_y,
 	}
 }
 
-Event_Data create_event(EVENT_TYPE type, unsigned int width, unsigned int height) {
-
+Event_Data create_event(EVENT_TYPE type, unsigned int width, unsigned int height,
+			char *text, unsigned int text_length) {
 	if (type == WINDOW) {
 		Event_Data default_event = {
 			.type = type,
 			.surface = create_rect(type, 0, 0, width, height),
+			.text = text,
+			.text_length = text_length
+		};
+		return default_event;
+	} else if (type == TEXT) {
+		Event_Data default_event = {
+			.type = type,
+			.surface = create_rect(type, 0, 0, width, height),
+			.text = text,
+			.text_length = text_length
 		};
 		return default_event;
 	} else {
 		Event_Data default_event = {
 			.type = type,
 			.surface = create_rect(type, 0, 0, width, height),
+			.text = text,
+			.text_length = text_length
 		};
 		return default_event;
 	}
 }
 
 int addWindow(unsigned int width, unsigned int height, unsigned int pos[2]) {
-
-	Event_Data event = create_event(WINDOW, width, height);
+	Event_Data event = create_event(WINDOW, width, height, NULL, 0);
 	event.surface.x = pos[0];
 	event.surface.y = pos[1];
 	event.root_window.is_valid = true;
@@ -291,13 +338,27 @@ bool AABB_element_check(Rect AABB, int position[2]) {
 	return x && y;
 }
 
-int addScroll(unsigned int lower_bounds, unsigned int upper_bounds) {
+int addText(char *text, unsigned int text_width, unsigned int text_height,
+		unsigned int text_length) {
+	Event_Data text_event = create_event(TEXT, text_width, text_height,
+			text, text_length);
+	if (NOUI_init) {
+		global_events[global_events_iter] = text_event;
+		global_events_iter++;
+	}
 
+	global_events[global_events_iter_checks] = text_event;
+	global_events_iter_checks++;
+
+	return 0;
+}
+
+int addScroll(unsigned int lower_bounds, unsigned int upper_bounds) {
 	UNUSED(lower_bounds);
 	UNUSED(upper_bounds);
 
-	const unsigned int SCROLLBAR_HEIGHT = 20;
-	const unsigned int GIZMO_WIDTH = 10;
+	const unsigned int SCROLLBAR_HEIGHT = global_default_style.row_height;
+	const unsigned int GIZMO_WIDTH = global_default_style.gizmo_width;
 	const unsigned int GIZMO_HEIGHT = SCROLLBAR_HEIGHT;
 
 	Event_Data root_window_event = global_events_get_root_window();
@@ -315,6 +376,11 @@ int addScroll(unsigned int lower_bounds, unsigned int upper_bounds) {
 
 	unsigned int element_offset = root_window_event.surface.x +
 		global_default_style.padding_x;
+	Event_Data previous_event = global_events_get_previous_node(1);
+	if (previous_event.type == TEXT) {
+		element_offset += previous_event.surface.width +
+				global_default_style.padding_x;
+	}
 
 	unsigned int gizmo_position_x = 
 		clamp(mouse_position[0] - element_offset - GIZMO_WIDTH/2,
@@ -323,12 +389,15 @@ int addScroll(unsigned int lower_bounds, unsigned int upper_bounds) {
 	Rect scrollbar_gizmo = create_rect(SCROLLBAR_GIZMO,
 			gizmo_position_x, 0, GIZMO_WIDTH, GIZMO_HEIGHT);
 
-	Event_Data event = create_event(SCROLLBAR, width, SCROLLBAR_HEIGHT);
+
+	Event_Data event = create_event(SCROLLBAR, width, SCROLLBAR_HEIGHT,
+			NULL, 0);
 
 	if (NOUI_init) {
-		sub_surfaces[sub_surfaces_iter] = scrollbar_gizmo;
 		global_events[global_events_iter] = event;
 		global_events_iter++;
+
+		sub_surfaces[sub_surfaces_iter] = scrollbar_gizmo;
 		sub_surfaces_iter++;
 	}
 
@@ -356,11 +425,9 @@ int addScroll(unsigned int lower_bounds, unsigned int upper_bounds) {
 }
 
 int addCheckbox() {
+	const unsigned int BOX_SIZE = global_default_style.row_height;
 
-	const unsigned int BOX_SIZE = 20;
-
-
-	Event_Data event = create_event(CHECKBOX, BOX_SIZE, BOX_SIZE);
+	Event_Data event = create_event(CHECKBOX, BOX_SIZE, BOX_SIZE, NULL, 0);
 
 
 	int *mouse_position = NOUI_CTX.mouse_position;
@@ -369,6 +436,7 @@ int addCheckbox() {
 		global_events[global_events_iter] = event;
 		global_events_iter++;
 	}
+
 
 	bool collision = AABB_element_check(
 			global_events[global_events_iter_checks].surface,
@@ -379,6 +447,7 @@ int addCheckbox() {
 	if (collision && NOUI_CTX.collided_button_id == NULL) {
 		NOUI_CTX.collided_button_id = current_rect_id;
 	}
+
 
 	bool clicked = false;
 	if (NOUI_CTX.is_button_selected &&
@@ -401,9 +470,7 @@ int addCheckbox() {
 }
 
 int addRadiobox(int number_of_boxes) {
-
-	const unsigned int BOX_SIZE = 20;
-
+	const unsigned int BOX_SIZE = global_default_style.row_height;
 
 	int *mouse_position = NOUI_CTX.mouse_position;
 
@@ -412,7 +479,8 @@ int addRadiobox(int number_of_boxes) {
 	int i;
 	int initial_element_array_index = global_events_iter_checks;
 	for (i = 0; i < number_of_boxes; ++i) {
-		Event_Data event = create_event(RADIOBOX, BOX_SIZE, BOX_SIZE);
+		Event_Data event = create_event(RADIOBOX, BOX_SIZE, BOX_SIZE,
+				NULL, 0);
 		event.radiobox_number = i;
 
 		if (NOUI_init) {
@@ -455,10 +523,15 @@ int addRadiobox(int number_of_boxes) {
 
 	if (button_pressed_number != -1) {
 		for (int j = i; j >= 0; j--) {
+			Event_Data *event = &global_events[initial_element_array_index + j];
 			if (j != button_pressed_number) {
-				global_events[initial_element_array_index + j].checked = false;
+				event->checked = false;
 			} else {
-				global_events[initial_element_array_index + j].checked = true;
+				if (!event->checked) {
+					event->checked = false;
+				} else {
+					event->checked = true;
+				}
 			}
 		}
 	}

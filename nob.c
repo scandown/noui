@@ -16,7 +16,11 @@ int main(int argc, char **argv)
 	nob_cmd_append(&cmd, "-lraylib");
 	if (!nob_cmd_run(&cmd)) return 1;
 
-	nob_cmd_append(&cmd, "./build/main");
-	nob_cmd_run(&cmd);
+	if (argc > 1) {
+		if (argv[1][0] == 'r') {
+			nob_cmd_append(&cmd, "./build/main");
+			nob_cmd_run(&cmd);
+		}
+	}
 	return 0;
 }

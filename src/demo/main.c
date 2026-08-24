@@ -6,8 +6,6 @@
 #define SCR_WIDTH 800
 #define SCR_HEIGHT 800
 
-void draw_text_game();
-
 int main() {
 
 	NOUI_CTX.is_button_selected = false;
@@ -23,7 +21,13 @@ int main() {
 
 		BeginDrawing();
 
-		draw_text_game();
+		char *word = "Hello, Sailour";
+
+		int font_height = global_default_style.row_height;
+		int font_width = MeasureText(word, font_height);
+
+		DrawText(word, (SCR_WIDTH - font_width) / 2,
+			(SCR_HEIGHT - font_height)/2, font_height, WHITE);
 
 		EndDrawing();
 
@@ -43,6 +47,7 @@ int main() {
 			NOUI_CTX.is_button_selected = true;
 		}
 
+		char *element_text;
 
 		addWindow(400, 600, (unsigned int []){20, 20});
 
@@ -53,8 +58,18 @@ int main() {
 
 		if (addScroll(10, 10)) printf("SCROLLBAR 1\n");
 
+		element_text = "hi there";
+		font_height = global_default_style.row_height;
+		font_width = MeasureText(element_text, font_height);
+		addText(element_text, font_width, font_height, sizeof(element_text));
+
 		if (addScroll(10, 10)) printf("SCROLLBAR 2\n");
 
+
+		element_text = "hi there";
+		font_height = global_default_style.row_height;
+		font_width = MeasureText(element_text, font_height);
+		addText(element_text, font_width, font_height, sizeof(element_text));
 		addCheckbox();
 
 		int num = -1;
@@ -84,9 +99,18 @@ int main() {
 					colour = BLUE;
 				}
 			}
-			DrawRectangle(base_rect.x, base_rect.y, 
+			if (base_event.type == TEXT) {
+				unsigned int font_height = base_event.surface.height;
+				DrawText(base_event.text,
+					base_event.surface.x,
+					base_event.surface.y,
+					font_height, WHITE);
+				
+			} else {
+				DrawRectangle(base_rect.x, base_rect.y, 
 					base_rect.width, base_rect.height,
-					colour);
+						colour);
+			}
 
 			for (unsigned int j = 0; j < sub_surfaces_iter; ++j) {
 				colour = BLUE;
@@ -105,13 +129,4 @@ int main() {
 	CloseWindow();
 
 	return 0;
-}
-
-void draw_text_game() {
-	char *word = "Hello, Sailour";
-
-	int font_height = 96;
-	int font_width = MeasureText(word, font_height);
-
-	DrawText(word, (SCR_WIDTH - font_width) / 2 , (SCR_HEIGHT - font_height)/2, font_height, WHITE);
 }
