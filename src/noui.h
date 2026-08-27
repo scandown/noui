@@ -204,7 +204,7 @@ void print_rect(Rect rect) {
 }
 
 Event_Data global_events_get_root_window() {
-	for (int i = global_events_iter - 1; i >= 0; --i) {
+	for (int i = global_events_iter_checks - 1; i >= 0; --i) {
 		if (global_events[i].type == WINDOW) {
 			return global_events[i];
 		}

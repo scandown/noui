@@ -47,37 +47,14 @@ int main() {
 			NOUI_CTX.is_button_selected = true;
 		}
 
-		char *element_text;
 
-		addWindow(400, 600, (unsigned int []){20, 20});
+		addWindow(200, 200, (unsigned int []){20, 20});
+		addScroll(10, 10);
 
-		// setColumn(1) -- set which column to start 
-		// resetRow(); -- set it back to the top rather
-		//		  than at the row the last ui
-		//		  element was at
+		addWindow(200, 200, (unsigned int []){300, 20});
+		addScroll(10, 10);
 
-		if (addScroll(10, 10)) printf("SCROLLBAR 1\n");
-
-		element_text = "hi there";
-		font_height = global_default_style.row_height;
-		font_width = MeasureText(element_text, font_height);
-		addText(element_text, font_width, font_height, sizeof(element_text));
-
-		if (addScroll(10, 10)) printf("SCROLLBAR 2\n");
-
-
-		element_text = "hi there";
-		font_height = global_default_style.row_height;
-		font_width = MeasureText(element_text, font_height);
-		addText(element_text, font_width, font_height, sizeof(element_text));
-		addCheckbox();
-
-		int num = -1;
-		if ((num = addRadiobox(3)) > -1) {
-			printf("CLICKED %d\n", num);
-		}
-
-
+		print_global_event_array();
 
 
 		for (unsigned int i = 0; i < global_events_iter; ++i) {
