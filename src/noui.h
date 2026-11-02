@@ -17,7 +17,9 @@ typedef enum {
 
 typedef struct {
 	Event_Type type;
-	float pos[2];
+	int pos[2];
+	int width;
+	int height;
 	bool clicked;
 } Event;
 

@@ -26,18 +26,55 @@ int main() {
 		DrawText(word, (SCR_WIDTH - font_width) / 2,
 			(SCR_HEIGHT - font_height)/2, font_height, WHITE);
 
-		EndDrawing();
 
 
-		Event window = {.type = WINDOW};
+		Event window = {.type = WINDOW,
+				.pos = {200, 200},
+				.width = 300,
+				.height = 300
+		};
 		event_add(window);
 
-		Event scroll = {.type = SCROLL};
-		event_add(scroll);
+		Event checkbox = {.type = CHECKBOX,
+				  .width = 30,
+				  .height = 30
+
+		};
+		event_add(checkbox);
 
 		event_end();
 
 		event_array_print();
+
+
+		int i = 0;
+		while (i < MAX_EVENTS) {
+			Event event = event_array[i];
+			Event event_prev = event_array[i-1];
+			switch (event_array[i].type) {
+				case WINDOW:
+					DrawRectangle(event.pos[0],
+							event.pos[1],
+							event.width,
+							event.height,
+							GRAY);
+
+					break;
+				case CHECKBOX:
+					int offsetX = event_prev.pos[0];
+					int offsetY = event_prev.pos[1];
+					DrawRectangle(event.pos[0] + offsetX,
+							event.pos[1] + offsetY,
+							event.width,
+							event.height,
+							DARKGRAY);
+					break;
+
+			}
+			i++;
+		}
+		EndDrawing();
+
 
 	}
 
