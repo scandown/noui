@@ -41,6 +41,10 @@ int main() {
 
 		};
 		event_add(checkbox);
+		checkbox.is_right_of = true;
+		event_add(checkbox);
+		checkbox.is_right_of = false;
+		event_add(checkbox);
 		event_add(checkbox);
 
 		event_end();
@@ -49,6 +53,8 @@ int main() {
 
 
 		int i = 0;
+		int CONFIG_Y_SPACING = 10;
+		int CONFIG_X_SPACING = 10;
 		// position setting
 		while (i < MAX_EVENTS) {
 			Event *event = &event_array[i];
@@ -56,23 +62,40 @@ int main() {
 
 			int previous_offset_x = event_prev->pos[0];
 			int previous_offset_y = event_prev->pos[1];
-			int previous_width = 0;
-			int previous_height = 0;
+			int previous_x = 0;
+			int previous_y = 0;
+			static int base_x = 0;
+			if (event->type == WINDOW) {
+				base_x = event->pos[0];
+			}
 			if (event_prev->type != WINDOW) {
-				previous_width = event_prev->width;
-				previous_height = event_prev->height;
+				if (event_prev->is_right_of) {
+					previous_x = event_prev->width + CONFIG_X_SPACING;
+				} else {
+					previous_offset_x = base_x;
+					previous_y = event_prev->height + CONFIG_Y_SPACING;
+				}
 			}
 
 			switch (event_array[i].type) {
 				case CHECKBOX:
-					event->pos[0] = previous_offset_x + previous_width;
-					event->pos[1] = previous_offset_y + previous_height;
+					event->pos[0] = previous_offset_x + previous_x;
+					event->pos[1] = previous_offset_y + previous_y;
 					break;
 				default:
 					break;
 			}
 			i++;
 		}
+
+
+
+
+
+
+
+
+
 		// drawing
 		i = 0;
 		while (i < MAX_EVENTS) {

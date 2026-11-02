@@ -21,6 +21,7 @@ typedef struct {
 	int width;
 	int height;
 	bool clicked;
+	bool is_right_of;
 } Event;
 
 
