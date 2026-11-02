@@ -9,7 +9,7 @@ typedef enum {
 	WINDOW,
 	CHECKBOX,
 	RADIOBOX,
-	SCROLL,
+	SCROLLBAR,
 	TEXT_INPUT,
 	TEXT,
 	DUMMY
@@ -18,8 +18,11 @@ typedef enum {
 typedef struct {
 	Event_Type type;
 	int pos[2];
+	int gizmo_pos[2];
 	int width;
 	int height;
+	int gizmo_width;
+	int gizmo_height;
 	bool clicked;
 	bool is_right_of;
 } Event;
@@ -89,8 +92,8 @@ void event_array_print() {
 			case RADIOBOX:
 				type = "Radiobox";
 				break;
-			case SCROLL:
-				type = "Scroll";
+			case SCROLLBAR:
+				type = "Scrollbar";
 				break;
 			case TEXT_INPUT:
 				type = "Text_Input";

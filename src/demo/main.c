@@ -47,6 +47,14 @@ int main() {
 		event_add(checkbox);
 		event_add(checkbox);
 
+		Event scrollbar = {.type = SCROLLBAR,
+				   .width = 80,
+				   .height = 30,
+				   .gizmo_width = 30,
+				   .gizmo_height = 30
+		};
+		event_add(scrollbar);
+
 		event_end();
 
 		event_array_print();
@@ -64,10 +72,13 @@ int main() {
 			int previous_offset_y = event_prev->pos[1];
 			int previous_x = 0;
 			int previous_y = 0;
+
 			static int base_x = 0;
 			if (event->type == WINDOW) {
 				base_x = event->pos[0];
 			}
+
+
 			if (event_prev->type != WINDOW) {
 				if (event_prev->is_right_of) {
 					previous_x = event_prev->width + CONFIG_X_SPACING;
@@ -78,11 +89,15 @@ int main() {
 			}
 
 			switch (event_array[i].type) {
-				case CHECKBOX:
+				case WINDOW:
+					break;
+				case SCROLLBAR:
+					event->gizmo_pos[0] = previous_offset_x + previous_x;
+					event->gizmo_pos[1] = previous_offset_y + previous_y;
+					// fall through
+				default:
 					event->pos[0] = previous_offset_x + previous_x;
 					event->pos[1] = previous_offset_y + previous_y;
-					break;
-				default:
 					break;
 			}
 			i++;
@@ -100,6 +115,7 @@ int main() {
 		i = 0;
 		while (i < MAX_EVENTS) {
 			Color colour = RED;
+			Color gizmo_colour = GREEN;
 			Event *event = &event_array[i];
 			switch (event->type) {
 				case WINDOW:
@@ -113,11 +129,20 @@ int main() {
 					break;
 			}
 
+
 			DrawRectangle(event->pos[0],
 					event->pos[1],
 					event->width,
 					event->height,
 					colour);
+
+			if (event->type == SCROLLBAR) {
+				DrawRectangle(event->gizmo_pos[0],
+						event->gizmo_pos[1],
+						event->gizmo_width,
+						event->gizmo_height,
+						gizmo_colour);
+			}
 			i++;
 
 		}
