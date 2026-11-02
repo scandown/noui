@@ -6,13 +6,13 @@
 #include <string.h>
 
 typedef enum {
+	DUMMY = 0,
 	WINDOW,
 	CHECKBOX,
 	RADIOBOX,
 	SCROLLBAR,
 	TEXT_INPUT,
-	TEXT,
-	DUMMY
+	TEXT
 } Event_Type;
 
 typedef struct {

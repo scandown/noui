@@ -55,11 +55,8 @@ int main() {
 		};
 		event_add(scrollbar);
 
-//bool AABB_detect_point(Rect AABB, int point[2]) {
-		Rect square = {window.pos[0], window.pos[1], window.width, window.height};
 		Vector2 pos = GetMousePosition();
-		bool collide = AABB_detect_point(square, (int []){(int)pos.x, (int)pos.y});
-		printf("collide = %d\n", collide);
+		int mouse_pos[] = {(int)pos.x, (int)pos.y};
 
 
 		int i = 0;
@@ -67,9 +64,6 @@ int main() {
 		int CONFIG_X_SPACING = 10;
 		// position setting
 		while (i < MAX_EVENTS) {
-			if (!event_initial) {
-				break;	
-			}
 			Event *event = &event_array[i];
 			Event *event_prev = &event_array[i-1];
 
@@ -77,6 +71,21 @@ int main() {
 			int previous_offset_y = event_prev->pos[1];
 			int previous_x = 0;
 			int previous_y = 0;
+
+
+			Rect square = {event->pos[0], event->pos[1], event->width, event->height};
+			bool collide = AABB_detect_point(square, mouse_pos);
+			if (collide) {
+				if (event->type == SCROLLBAR) {
+					event->gizmo_pos[0] = mouse_pos[0];
+					event->gizmo_pos[1] = mouse_pos[1];
+				}
+			}
+
+			if (!event_initial) {
+				i++;
+				continue;	
+			}
 
 			static int base_x = 0;
 			if (event->type == WINDOW) {
