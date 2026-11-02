@@ -55,16 +55,15 @@ int main() {
 		};
 		event_add(scrollbar);
 
-		event_end();
-
-		event_array_print();
-
 
 		int i = 0;
 		int CONFIG_Y_SPACING = 10;
 		int CONFIG_X_SPACING = 10;
 		// position setting
 		while (i < MAX_EVENTS) {
+			if (!event_initial) {
+				break;	
+			}
 			Event *event = &event_array[i];
 			Event *event_prev = &event_array[i-1];
 
@@ -147,6 +146,7 @@ int main() {
 
 		}
 		EndDrawing();
+		event_end();
 
 
 	}
