@@ -16,6 +16,13 @@ typedef enum {
 } Event_Type;
 
 typedef struct {
+	int x;
+	int y;
+	int width;
+	int height;
+} Rect;
+
+typedef struct {
 	Event_Type type;
 	int pos[2];
 	int gizmo_pos[2];
@@ -37,6 +44,8 @@ void NOUI_init();
 int event_add(Event event);
 void event_end();
 void event_array_print();
+
+bool AABB_detect_point(Rect AABB, int point[2]);
 
 #define NOUI_IMPLEMENTATION
 #ifdef NOUI_IMPLEMENTATION
@@ -76,6 +85,16 @@ int event_add(Event event) {
 void event_end() {
 	event_initial = false;
 	event_loop_number = 0;
+}
+
+
+bool AABB_detect_point(Rect AABB, int point[2]) {
+	bool x_collide = false;
+	bool y_collide = false;
+	x_collide = (point[0] < AABB.x + AABB.width && point[0] > AABB.x);
+	y_collide = (point[1] < AABB.y + AABB.height && point[1] > AABB.y);
+
+	return x_collide && y_collide;
 }
 
 void event_array_print() {

@@ -55,6 +55,12 @@ int main() {
 		};
 		event_add(scrollbar);
 
+//bool AABB_detect_point(Rect AABB, int point[2]) {
+		Rect square = {window.pos[0], window.pos[1], window.width, window.height};
+		Vector2 pos = GetMousePosition();
+		bool collide = AABB_detect_point(square, (int []){(int)pos.x, (int)pos.y});
+		printf("collide = %d\n", collide);
+
 
 		int i = 0;
 		int CONFIG_Y_SPACING = 10;
