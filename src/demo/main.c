@@ -51,7 +51,7 @@ int main() {
 				   .width = 80,
 				   .height = 30,
 				   .gizmo_width = 30,
-				   .gizmo_height = 30
+				   .gizmo_height = scrollbar.height
 		};
 		event_add(scrollbar);
 
@@ -73,12 +73,15 @@ int main() {
 			int previous_y = 0;
 
 
-			Rect square = {event->pos[0], event->pos[1], event->width, event->height};
-			bool collide = AABB_detect_point(square, mouse_pos);
-			if (collide) {
-				if (event->type == SCROLLBAR) {
-					event->gizmo_pos[0] = mouse_pos[0];
-					event->gizmo_pos[1] = mouse_pos[1];
+			if (event->type == SCROLLBAR) {
+				Rect gizmo_square = {event->gizmo_pos[0], event->gizmo_pos[1], event->width, event->height};
+				bool gizmo_collide = AABB_detect_point(gizmo_square, mouse_pos);
+				if (gizmo_collide) {
+					if (event->gizmo_width == event->width) {
+						event->gizmo_pos[1] = mouse_pos[1] - event->gizmo_height / 2;
+					} else if (event->gizmo_height == event->height) {
+						event->gizmo_pos[0] = mouse_pos[0] - event->gizmo_width / 2;
+					}
 				}
 			}
 
