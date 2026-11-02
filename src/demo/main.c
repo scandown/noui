@@ -41,6 +41,7 @@ int main() {
 
 		};
 		event_add(checkbox);
+		event_add(checkbox);
 
 		event_end();
 
@@ -49,24 +50,33 @@ int main() {
 
 		int i = 0;
 		while (i < MAX_EVENTS) {
-			Event event = event_array[i];
-			Event event_prev = event_array[i-1];
+			Event *event = &event_array[i];
+			Event *event_prev = &event_array[i-1];
+
+			int previous_offset_x = event_prev->pos[0];
+			int previous_offset_y = event_prev->pos[1];
+			int previous_width = 0;
+			int previous_height = 0;
+			if (event_prev->type != WINDOW) {
+				previous_width = event_prev->width;
+				previous_height = event_prev->height;
+			}
 			switch (event_array[i].type) {
 				case WINDOW:
-					DrawRectangle(event.pos[0],
-							event.pos[1],
-							event.width,
-							event.height,
+					DrawRectangle(event->pos[0],
+							event->pos[1],
+							event->width,
+							event->height,
 							GRAY);
 
 					break;
 				case CHECKBOX:
-					int offsetX = event_prev.pos[0];
-					int offsetY = event_prev.pos[1];
-					DrawRectangle(event.pos[0] + offsetX,
-							event.pos[1] + offsetY,
-							event.width,
-							event.height,
+					event->pos[0] = previous_offset_x + previous_width;
+					event->pos[1] = previous_offset_y + previous_height;
+					DrawRectangle(event->pos[0],
+							event->pos[1],
+							event->width,
+							event->height,
 							DARKGRAY);
 					break;
 
