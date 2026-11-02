@@ -49,6 +49,7 @@ int main() {
 
 
 		int i = 0;
+		// position setting
 		while (i < MAX_EVENTS) {
 			Event *event = &event_array[i];
 			Event *event_prev = &event_array[i-1];
@@ -61,27 +62,41 @@ int main() {
 				previous_width = event_prev->width;
 				previous_height = event_prev->height;
 			}
-			switch (event_array[i].type) {
-				case WINDOW:
-					DrawRectangle(event->pos[0],
-							event->pos[1],
-							event->width,
-							event->height,
-							GRAY);
 
-					break;
+			switch (event_array[i].type) {
 				case CHECKBOX:
 					event->pos[0] = previous_offset_x + previous_width;
 					event->pos[1] = previous_offset_y + previous_height;
-					DrawRectangle(event->pos[0],
-							event->pos[1],
-							event->width,
-							event->height,
-							DARKGRAY);
 					break;
-
+				default:
+					break;
 			}
 			i++;
+		}
+		// drawing
+		i = 0;
+		while (i < MAX_EVENTS) {
+			Color colour = RED;
+			Event *event = &event_array[i];
+			switch (event->type) {
+				case WINDOW:
+					colour = GRAY;
+					break;
+				case CHECKBOX:
+					colour = DARKGRAY;
+					break;
+				default:
+					colour = RED;
+					break;
+			}
+
+			DrawRectangle(event->pos[0],
+					event->pos[1],
+					event->width,
+					event->height,
+					colour);
+			i++;
+
 		}
 		EndDrawing();
 
