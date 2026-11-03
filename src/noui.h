@@ -69,8 +69,7 @@ int event_add(Event event) {
 	if (event_array[0].type == DUMMY) {
 		event_initial = true;	
 	}
-	if (event_array[event_loop_number_inspection].type != event.type
-		|| (event.type == WINDOW && event_array[event_loop_number_inspection+1].type != event.type)) {
+	if (event_array[event_loop_number_inspection].type != event.type) {
 		event_initial = true;	
 	}
 	if (event_loop_number > MAX_EVENTS - 1) {
@@ -83,8 +82,8 @@ int event_add(Event event) {
 	if (event_initial) {
 		Event dummy_event = event;
 		event_array[event_loop_number] = dummy_event;
-		event_loop_number++;
 	}
+
 
 	if (event_array[0].type != WINDOW) {
 		fprintf(stderr, "Error: First event needs to be a window\n");
@@ -92,6 +91,7 @@ int event_add(Event event) {
 	}
 
 	event_loop_number_inspection++;
+	event_loop_number++;
 
 	return 0;
 }

@@ -77,7 +77,6 @@ int main() {
 		Vector2 pos = GetMousePosition();
 		int mouse_pos[] = {(int)pos.x, (int)pos.y};
 
-
 		int i = 0;
 		int CONFIG_Y_SPACING = 10;
 		int CONFIG_X_SPACING = 10;
