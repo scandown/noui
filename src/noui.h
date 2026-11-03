@@ -39,6 +39,7 @@ typedef struct {
 Event event_array[MAX_EVENTS] = {0};
 bool event_initial = false;
 int event_loop_number = 0;
+int event_loop_number_inspection = 0;
 
 void NOUI_init();
 int event_add(Event event);
@@ -68,10 +69,15 @@ int event_add(Event event) {
 	if (event_array[0].type == DUMMY) {
 		event_initial = true;	
 	}
+	if (event_array[event_loop_number_inspection].type != event.type
+		|| (event.type == WINDOW && event_array[event_loop_number_inspection+1].type != event.type)) {
+		event_initial = true;	
+	}
 	if (event_loop_number > MAX_EVENTS - 1) {
 		fprintf(stderr, "Error: Exceeded MAX_EVENTS\n");
 		return -1;
 	}
+
 
 
 	if (event_initial) {
@@ -85,6 +91,8 @@ int event_add(Event event) {
 		return -1;
 	}
 
+	event_loop_number_inspection++;
+
 	return 0;
 }
 
@@ -93,6 +101,7 @@ int event_add(Event event) {
 void event_end() {
 	event_initial = false;
 	event_loop_number = 0;
+	event_loop_number_inspection = 0;
 }
 
 

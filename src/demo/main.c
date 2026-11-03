@@ -33,19 +33,12 @@ int main() {
 				.width = 300,
 				.height = 300
 		};
-		event_add(window);
 
 		Event checkbox = {.type = CHECKBOX,
 				  .width = 30,
 				  .height = 30
 
 		};
-		event_add(checkbox);
-		checkbox.is_right_of = true;
-		event_add(checkbox);
-		checkbox.is_right_of = false;
-		event_add(checkbox);
-		event_add(checkbox);
 
 		Event scrollbar = {.type = SCROLLBAR,
 				   .width = 80,
@@ -53,7 +46,33 @@ int main() {
 				   .gizmo_width = 30,
 				   .gizmo_height = scrollbar.height
 		};
-		event_add(scrollbar);
+
+
+
+		if (IsKeyDown(KEY_RIGHT)) {
+			event_add(window);
+
+			event_add(checkbox);
+			checkbox.is_right_of = true;
+			event_add(checkbox);
+			checkbox.is_right_of = false;
+			event_add(checkbox);
+			event_add(checkbox);
+
+			event_add(scrollbar);
+		} else {
+			event_add(window);
+
+			event_add(scrollbar);
+			checkbox.is_right_of = true;
+			event_add(checkbox);
+			checkbox.is_right_of = false;
+			event_add(checkbox);
+			event_add(checkbox);
+
+			event_add(scrollbar);
+
+		}
 
 		Vector2 pos = GetMousePosition();
 		int mouse_pos[] = {(int)pos.x, (int)pos.y};
