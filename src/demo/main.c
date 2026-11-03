@@ -76,11 +76,16 @@ int main() {
 			if (event->type == SCROLLBAR) {
 				Rect gizmo_square = {event->gizmo_pos[0], event->gizmo_pos[1], event->gizmo_width, event->gizmo_height};
 				bool gizmo_collide = AABB_detect_point(gizmo_square, mouse_pos);
+
 				if (gizmo_collide && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
 					if (event->gizmo_width == event->width) {
 						event->gizmo_pos[1] = mouse_pos[1] - event->gizmo_height / 2;
+						event->gizmo_pos[1] = NOUI_clampf(event->gizmo_pos[1],
+								event->pos[1], event->pos[1] + event->height - event->gizmo_height);
 					} else if (event->gizmo_height == event->height) {
 						event->gizmo_pos[0] = mouse_pos[0] - event->gizmo_width / 2;
+						event->gizmo_pos[0] = NOUI_clampf(event->gizmo_pos[0],
+								event->pos[0], event->pos[0] + event->width - event->gizmo_width);
 					}
 				}
 			}

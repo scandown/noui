@@ -44,11 +44,19 @@ void NOUI_init();
 int event_add(Event event);
 void event_end();
 void event_array_print();
+float NOUI_clampf(float val, float min, float max);
 
 bool AABB_detect_point(Rect AABB, int point[2]);
 
 #define NOUI_IMPLEMENTATION
 #ifdef NOUI_IMPLEMENTATION
+
+float NOUI_clampf(float val, float min, float max) {
+	if (val < min) val = min;
+	else if (val > max) val = max;
+
+	return val;
+}
 
 void NOUI_init() {
 	for (int i = 0; i < MAX_EVENTS; ++i) {
