@@ -40,10 +40,10 @@ typedef struct {
 Event event_array[MAX_EVENTS] = {0};
 bool event_initial = false;
 int event_loop_number = 0;
-int event_loop_number_inspection = 0;
 
 void NOUI_init();
 int event_add(Event event);
+void event_logic();
 void event_end();
 void event_array_print();
 float NOUI_clampf(float val, float min, float max);
@@ -67,16 +67,15 @@ void NOUI_init() {
 }
 
 int event_add(Event event) {
-	if (event_array[event_loop_number_inspection].type != event.type) {
-		event_initial = true;	
-	}
 	if (event_loop_number > MAX_EVENTS - 1) {
 		fprintf(stderr, "Error: Exceeded MAX_EVENTS\n");
 		return -1;
 	}
 
 
-
+	if (event_array[event_loop_number].type != event.type) {
+		event_initial = true;	
+	}
 	if (event_initial) {
 		event_array[event_loop_number] = event;
 	}
@@ -86,18 +85,100 @@ int event_add(Event event) {
 		return -1;
 	}
 
-	event_loop_number_inspection++;
 	event_loop_number++;
 
 	return 0;
 }
 
+void event_logic() {
+	int i = 0;
+	int CONFIG_Y_SPACING = 10;
+	int CONFIG_X_SPACING = 10;
+
+	Vector2 pos = GetMousePosition();
+	int mouse_pos[] = {(int)pos.x, (int)pos.y};
+
+	while (i < MAX_EVENTS) {
+		Event *event = &event_array[i];
+		Event *event_prev = &event_array[i-1];
+
+		int previous_offset_x = event_prev->pos[0];
+		int previous_offset_y = event_prev->pos[1];
+		int previous_x = 0;
+		int previous_y = 0;
+
+
+		if (event->type == SCROLLBAR) {
+			Rect gizmo_square = {event->gizmo_pos[0], event->gizmo_pos[1], event->gizmo_width, event->gizmo_height};
+			bool gizmo_collide = AABB_detect_point(gizmo_square, mouse_pos);
+
+			if (gizmo_collide && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+				if (event->gizmo_width == event->width) {
+					event->gizmo_pos[1] = mouse_pos[1] - event->gizmo_height / 2;
+					event->gizmo_pos[1] = NOUI_clampf(event->gizmo_pos[1],
+							event->pos[1], event->pos[1] + event->height - event->gizmo_height);
+				} else if (event->gizmo_height == event->height) {
+					event->gizmo_pos[0] = mouse_pos[0] - event->gizmo_width / 2;
+					event->gizmo_pos[0] = NOUI_clampf(event->gizmo_pos[0],
+							event->pos[0], event->pos[0] + event->width - event->gizmo_width);
+				}
+			}
+		}
+
+		if (event->type == CHECKBOX) {
+			Rect square = {event->pos[0], event->pos[1], event->width, event->height};
+			bool collide = AABB_detect_point(square, mouse_pos);
+
+			if (collide && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+				event->clicked = !event->clicked;
+			}
+		}
+
+		if (!event_initial) {
+			i++;
+			continue;	
+		}
+
+		static int base_x = 0;
+		if (event->type == WINDOW) {
+			base_x = event->pos[0];
+		}
+
+		event->max_height = event->height;
+
+		if (event_prev->type != WINDOW) {
+			if (event_prev->max_height > event->max_height) {
+				event->max_height = event_prev->max_height;
+			}
+			if (event_prev->is_right_of) {
+				previous_x = event_prev->width + CONFIG_X_SPACING;
+			} else {
+				previous_offset_x = base_x;
+				previous_y = event_prev->max_height + CONFIG_Y_SPACING;
+				event->max_height = event->height;
+			}
+		}
+
+		switch (event_array[i].type) {
+			case WINDOW:
+				break;
+			case SCROLLBAR:
+				event->gizmo_pos[0] = previous_offset_x + previous_x;
+				event->gizmo_pos[1] = previous_offset_y + previous_y;
+				// fall through
+			default:
+				event->pos[0] = previous_offset_x + previous_x;
+				event->pos[1] = previous_offset_y + previous_y;
+				break;
+		}
+		i++;
+	}
+}
 
 
 void event_end() {
 	event_initial = false;
 	event_loop_number = 0;
-	event_loop_number_inspection = 0;
 }
 
 
