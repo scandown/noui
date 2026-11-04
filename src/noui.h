@@ -67,9 +67,6 @@ void NOUI_init() {
 }
 
 int event_add(Event event) {
-	if (event_array[0].type == DUMMY) {
-		event_initial = true;	
-	}
 	if (event_array[event_loop_number_inspection].type != event.type) {
 		event_initial = true;	
 	}
@@ -83,7 +80,6 @@ int event_add(Event event) {
 	if (event_initial) {
 		event_array[event_loop_number] = event;
 	}
-
 
 	if (event_array[0].type != WINDOW) {
 		fprintf(stderr, "Error: First event needs to be a window\n");
