@@ -79,16 +79,6 @@ int main() {
 
 		}
 
-		// position setting
-		event_logic();
-
-
-
-
-
-
-
-
 
 		// drawing
 		int i = 0;
