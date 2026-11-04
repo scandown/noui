@@ -28,6 +28,7 @@ typedef struct {
 	int gizmo_pos[2];
 	int width;
 	int height;
+	int max_height;
 	int gizmo_width;
 	int gizmo_height;
 	bool clicked;

@@ -41,10 +41,10 @@ int main() {
 		};
 
 		Event scrollbar = {.type = SCROLLBAR,
-				   .width = 80,
-				   .height = 30,
-				   .gizmo_width = 30,
-				   .gizmo_height = scrollbar.height
+				   .width = 30,
+				   .height = 80,
+				   .gizmo_width = scrollbar.width,
+				   .gizmo_height = 30//scrollbar.height
 		};
 
 
@@ -64,6 +64,10 @@ int main() {
 			event_add(window);
 
 			event_add(scrollbar);
+			scrollbar.is_right_of = true;
+			event_add(scrollbar);
+			scrollbar.is_right_of = false;
+
 			checkbox.is_right_of = true;
 			event_add(checkbox);
 			checkbox.is_right_of = false;
@@ -118,13 +122,18 @@ int main() {
 				base_x = event->pos[0];
 			}
 
+			event->max_height = event->height;
 
 			if (event_prev->type != WINDOW) {
+				if (event_prev->max_height > event->max_height) {
+					event->max_height = event_prev->max_height;
+				}
 				if (event_prev->is_right_of) {
 					previous_x = event_prev->width + CONFIG_X_SPACING;
 				} else {
 					previous_offset_x = base_x;
-					previous_y = event_prev->height + CONFIG_Y_SPACING;
+					previous_y = event_prev->max_height + CONFIG_Y_SPACING;
+					event->max_height = event->height;
 				}
 			}
 
