@@ -81,8 +81,7 @@ int event_add(Event event) {
 
 
 	if (event_initial) {
-		Event dummy_event = event;
-		event_array[event_loop_number] = dummy_event;
+		event_array[event_loop_number] = event;
 	}
 
 
