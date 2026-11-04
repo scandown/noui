@@ -112,6 +112,15 @@ int main() {
 					}
 				}
 			}
+			
+			if (event->type == CHECKBOX) {
+				Rect square = {event->pos[0], event->pos[1], event->width, event->height};
+				bool collide = AABB_detect_point(square, mouse_pos);
+
+				if (collide && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+					event->clicked = !event->clicked;
+				}
+			}
 
 			if (!event_initial) {
 				i++;
@@ -172,7 +181,11 @@ int main() {
 					colour = GRAY;
 					break;
 				case CHECKBOX:
-					colour = DARKGRAY;
+					if (event->clicked) {
+						colour = LIGHTGRAY;
+					} else {
+						colour = DARKGRAY;
+					}
 					break;
 				default:
 					colour = RED;
