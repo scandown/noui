@@ -29,7 +29,7 @@ int main() {
 
 
 		Event window = {.type = WINDOW,
-				.pos = {200, 200},
+				.pos = {0, 0},
 				.width = 300,
 				.height = 300
 		};

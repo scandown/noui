@@ -70,12 +70,20 @@ void NOUI_init() {
 }
 
 void event_update_pos() {
+	int base_offset[2] = {0};
 	for (int i = 0; i < event_loop_number; ++i) {
 		if (event_initial) {
 			event_translated_array[i] = event_array[i];
 		}
-		event_translated_array[i].pos[0] = event_array[i].pos[0];
-		event_translated_array[i].pos[1] = event_array[i].pos[1];
+		if (event_translated_array[i].type == WINDOW) {
+			base_offset[0] = event_translated_array[i].pos[0];
+			base_offset[1] = event_translated_array[i].pos[1];
+		} else {
+			event_translated_array[i].pos[0] = event_array[i].pos[0] + base_offset[0];
+			event_translated_array[i].pos[1] = event_array[i].pos[1] + base_offset[1];
+			event_translated_array[i].gizmo_pos[0] = event_array[i].gizmo_pos[0] + base_offset[0];
+			event_translated_array[i].gizmo_pos[1] = event_array[i].gizmo_pos[1] + base_offset[1];
+		}
 	}
 }
 
@@ -111,12 +119,16 @@ void event_logic() {
 	Vector2 pos = GetMousePosition();
 	int mouse_pos[] = {(int)pos.x, (int)pos.y};
 
-	event_array[0].pos[0] = mouse_pos[0];
+	if (IsKeyDown(KEY_M)) {
+		event_translated_array[0].pos[0] = mouse_pos[0];
+		event_translated_array[0].pos[1] = mouse_pos[1];
+	}
 
-	Event *event = &event_translated_array[event_loop_number];
+	Event *event_translated = &event_translated_array[event_loop_number];
+	Event *event = &event_array[event_loop_number];
 
 	if (event->type == SCROLLBAR) {
-		Rect gizmo_square = {event->gizmo_pos[0], event->gizmo_pos[1], event->gizmo_width, event->gizmo_height};
+		Rect gizmo_square = {event_translated->gizmo_pos[0], event_translated->gizmo_pos[1], event_translated->gizmo_width, event_translated->gizmo_height};
 		bool gizmo_collide = AABB_detect_point(gizmo_square, mouse_pos);
 
 		if (gizmo_collide && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
@@ -125,15 +137,17 @@ void event_logic() {
 				event->gizmo_pos[1] = NOUI_clampf(event->gizmo_pos[1],
 						event->pos[1], event->pos[1] + event->height - event->gizmo_height);
 			} else if (event->gizmo_height == event->height) {
-				event->gizmo_pos[0] = mouse_pos[0] - event->gizmo_width / 2;
-				event->gizmo_pos[0] = NOUI_clampf(event->gizmo_pos[0],
-						event->pos[0], event->pos[0] + event->width - event->gizmo_width);
+				// get percentage of mouse to scrollbar
+				float percentage_along_scrollbar = (float)(mouse_pos[0] - event->pos[0] - event->gizmo_width / 2) / event->width;
+				percentage_along_scrollbar = NOUI_clampf(percentage_along_scrollbar, 0.0, 1.0);
+				float val = event->width * percentage_along_scrollbar;
+				event->gizmo_pos[0] = event->pos[0] + val;
 			}
 		}
 	}
 
 	if (event->type == CHECKBOX) {
-		Rect square = {event->pos[0], event->pos[1], event->width, event->height};
+		Rect square = {event_translated->pos[0], event_translated->pos[1], event_translated->width, event_translated->height};
 		bool collide = AABB_detect_point(square, mouse_pos);
 
 		if (collide && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
