@@ -74,6 +74,7 @@ int main() {
 
 			event_add(scrollbar);
 			checkbox.is_right_of = false;
+			event_add(checkbox);
 			event_add(scrollbar);
 
 		}
@@ -81,7 +82,7 @@ int main() {
 
 		// drawing
 		int i = 0;
-		while (i < event_loop_number) {
+		while (i <= event_loop_number) {
 			Color colour = RED;
 			Color gizmo_colour = GREEN;
 			Event *event = &event_translated_array[i];

@@ -71,7 +71,7 @@ void NOUI_init() {
 
 void event_update_pos() {
 	int base_offset[2] = {0};
-	for (int i = 0; i < event_loop_number; ++i) {
+	for (int i = 0; i <= event_loop_number; ++i) {
 		if (event_translated_array[i].type == WINDOW) {
 			base_offset[0] = event_translated_array[i].pos[0];
 			base_offset[1] = event_translated_array[i].pos[1];
@@ -139,7 +139,6 @@ void event_logic() {
 				float percentage_along_scrollbar =
 					(float)(mouse_pos[0] - event_translated->pos[0] - event_translated->gizmo_width / 2) / event_translated->width;
 				percentage_along_scrollbar = NOUI_clampf(percentage_along_scrollbar, 0.0, 1.0);
-				printf("%f\n",percentage_along_scrollbar);
 				float val = event_translated->width * percentage_along_scrollbar;
 				event->gizmo_pos[0] = event->pos[0] + val;
 			}
