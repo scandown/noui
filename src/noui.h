@@ -72,13 +72,11 @@ void NOUI_init() {
 void event_update_pos() {
 	int base_offset[2] = {0};
 	for (int i = 0; i < event_loop_number; ++i) {
-		if (event_initial) {
-			event_translated_array[i] = event_array[i];
-		}
 		if (event_translated_array[i].type == WINDOW) {
 			base_offset[0] = event_translated_array[i].pos[0];
 			base_offset[1] = event_translated_array[i].pos[1];
 		} else {
+			event_translated_array[i] = event_array[i];
 			event_translated_array[i].pos[0] = event_array[i].pos[0] + base_offset[0];
 			event_translated_array[i].pos[1] = event_array[i].pos[1] + base_offset[1];
 			event_translated_array[i].gizmo_pos[0] = event_array[i].gizmo_pos[0] + base_offset[0];
