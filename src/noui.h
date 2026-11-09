@@ -138,9 +138,11 @@ void event_logic() {
 						event->pos[1], event->pos[1] + event->height - event->gizmo_height);
 			} else if (event->gizmo_height == event->height) {
 				// get percentage of mouse to scrollbar
-				float percentage_along_scrollbar = (float)(mouse_pos[0] - event->pos[0] - event->gizmo_width / 2) / event->width;
+				float percentage_along_scrollbar =
+					(float)(mouse_pos[0] - event_translated->pos[0] - event_translated->gizmo_width / 2) / event_translated->width;
 				percentage_along_scrollbar = NOUI_clampf(percentage_along_scrollbar, 0.0, 1.0);
-				float val = event->width * percentage_along_scrollbar;
+				printf("%f\n",percentage_along_scrollbar);
+				float val = event_translated->width * percentage_along_scrollbar;
 				event->gizmo_pos[0] = event->pos[0] + val;
 			}
 		}
