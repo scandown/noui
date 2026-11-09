@@ -38,12 +38,15 @@ typedef struct {
 
 #define MAX_EVENTS 256
 Event event_array[MAX_EVENTS] = {0};
+Event event_translated_array[MAX_EVENTS] = {0};
 bool event_initial = false;
 int event_loop_number = 0;
 
 void NOUI_init();
 int event_add(Event event);
 void event_logic();
+void event_update_pos();
+void event_update_data();
 void event_end();
 void event_array_print();
 float NOUI_clampf(float val, float min, float max);
@@ -63,6 +66,16 @@ float NOUI_clampf(float val, float min, float max) {
 void NOUI_init() {
 	for (int i = 0; i < MAX_EVENTS; ++i) {
 		event_array[i].type = DUMMY;
+	}
+}
+
+void event_update_pos() {
+	for (int i = 0; i < event_loop_number; ++i) {
+		if (event_initial) {
+			event_translated_array[i] = event_array[i];
+		}
+		event_translated_array[i].pos[0] = event_array[i].pos[0];
+		event_translated_array[i].pos[1] = event_array[i].pos[1];
 	}
 }
 
@@ -86,6 +99,8 @@ int event_add(Event event) {
 	}
 
 	event_logic();
+	event_update_pos();
+	event_update_data();
 	event_loop_number++;
 
 
@@ -93,20 +108,12 @@ int event_add(Event event) {
 }
 
 void event_logic() {
-	int CONFIG_Y_SPACING = 10;
-	int CONFIG_X_SPACING = 10;
-
 	Vector2 pos = GetMousePosition();
 	int mouse_pos[] = {(int)pos.x, (int)pos.y};
 
-	Event *event = &event_array[event_loop_number];
-	Event *event_prev = &event_array[event_loop_number-1];
+	event_array[0].pos[0] = mouse_pos[0];
 
-	int previous_offset_x = event_prev->pos[0];
-	int previous_offset_y = event_prev->pos[1];
-	int previous_x = 0;
-	int previous_y = 0;
-
+	Event *event = &event_translated_array[event_loop_number];
 
 	if (event->type == SCROLLBAR) {
 		Rect gizmo_square = {event->gizmo_pos[0], event->gizmo_pos[1], event->gizmo_width, event->gizmo_height};
@@ -133,6 +140,13 @@ void event_logic() {
 			event->clicked = !event->clicked;
 		}
 	}
+}
+
+void event_update_data() {
+	int CONFIG_Y_SPACING = 10;
+	int CONFIG_X_SPACING = 10;
+	Event *event = &event_array[event_loop_number];
+	Event *event_prev = &event_array[event_loop_number-1];
 
 	if (!event_initial) {
 		return;
@@ -144,6 +158,11 @@ void event_logic() {
 	}
 
 	event->max_height = event->height;
+
+	int previous_offset_x = event_prev->pos[0];
+	int previous_offset_y = event_prev->pos[1];
+	int previous_x = 0;
+	int previous_y = 0;
 
 	if (event_prev->type != WINDOW) {
 		if (event_prev->max_height > event->max_height) {
@@ -171,7 +190,6 @@ void event_logic() {
 			break;
 	}
 }
-
 
 void event_end() {
 	event_initial = false;

@@ -41,16 +41,16 @@ int main() {
 		};
 
 		Event scrollbar = {.type = SCROLLBAR,
-				   .width = 30,
-				   .height = 80,
-				   .gizmo_width = scrollbar.width,
-				   .gizmo_height = 30//scrollbar.height
+				   .width = 80,
+				   .height = 30,
+				   .gizmo_width = 30,//scrollbar.width,
+				   .gizmo_height = scrollbar.height
 		};
 
 
+		event_add(window);
 
 		if (IsKeyDown(KEY_RIGHT)) {
-			event_add(window);
 
 			event_add(checkbox);
 			checkbox.is_right_of = true;
@@ -61,7 +61,6 @@ int main() {
 
 			event_add(scrollbar);
 		} else {
-			event_add(window);
 
 			event_add(scrollbar);
 			scrollbar.is_right_of = true;
@@ -85,7 +84,7 @@ int main() {
 		while (i < event_loop_number) {
 			Color colour = RED;
 			Color gizmo_colour = GREEN;
-			Event *event = &event_array[i];
+			Event *event = &event_translated_array[i];
 			switch (event->type) {
 				case WINDOW:
 					colour = GRAY;
