@@ -68,9 +68,10 @@ int main() {
 			scrollbar.is_right_of = false;
 
 			checkbox.is_right_of = true;
-			event_add(checkbox);
-			event_add(checkbox);
-			event_add(checkbox);
+			if (event_add(checkbox).clicked) {
+				event_add(checkbox);
+				event_add(checkbox);
+			}
 
 			event_add(scrollbar);
 			checkbox.is_right_of = false;

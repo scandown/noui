@@ -43,8 +43,8 @@ bool event_initial = false;
 int event_loop_number = 0;
 
 void NOUI_init();
-int event_add(Event event);
-void event_logic();
+Event event_add(Event event);
+Event event_logic();
 void event_update_pos();
 void event_update_data();
 void event_end();
@@ -84,10 +84,11 @@ void event_update_pos() {
 	}
 }
 
-int event_add(Event event) {
+Event event_add(Event event) {
+	Event dummy = {0};
 	if (event_loop_number > MAX_EVENTS - 1) {
 		fprintf(stderr, "Error: Exceeded MAX_EVENTS\n");
-		return -1;
+		return dummy;
 	}
 
 
@@ -100,19 +101,19 @@ int event_add(Event event) {
 
 	if (event_array[0].type != WINDOW) {
 		fprintf(stderr, "Error: First event needs to be a window\n");
-		return -1;
+		return dummy;
 	}
 
-	event_logic();
+	Event event_new = event_logic();
 	event_update_pos();
 	event_update_data();
 	event_loop_number++;
 
 
-	return 0;
+	return event_new;
 }
 
-void event_logic() {
+Event event_logic() {
 	Vector2 pos = GetMousePosition();
 	int mouse_pos[] = {(int)pos.x, (int)pos.y};
 
@@ -152,6 +153,9 @@ void event_logic() {
 			event->clicked = !event->clicked;
 		}
 	}
+
+	Event current_event = *event_translated;
+	return current_event;
 }
 
 void event_update_data() {
