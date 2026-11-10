@@ -36,6 +36,8 @@ typedef struct {
 } Event;
 
 
+
+
 #define MAX_EVENTS 256
 Event event_array[MAX_EVENTS] = {0};
 Event event_translated_array[MAX_EVENTS] = {0};
@@ -52,6 +54,40 @@ void event_array_print();
 float NOUI_clampf(float val, float min, float max);
 
 bool AABB_detect_point(Rect AABB, int point[2]);
+
+#define ARRAY_INSERT(array, array_length, index, value) do { \
+		for (int i = array_length; i > index; --i) { \
+			arr[i] = arr[i-1]; \
+		} \
+		arr[index] = value; \
+	} while (0)
+
+#define ARRAY_PRINT(array, array_length, format) do { \
+		printf(#array " = {"); \
+		const int MAX_LINES = 10; \
+		bool has_newline = false; \
+		for (int i = 0; i < array_length; ++i) { \
+			char *separator = ", "; \
+			if (i == array_length - 1) { \
+				separator = ""; \
+			} \
+			printf(format "%s", array[i], separator); \
+			if ((i + 1) % MAX_LINES == 0) { \
+				printf("\n"); \
+				has_newline = true; \
+				for (int j = 0; j < sizeof(#array) + sizeof(" ="); ++j) { \
+					printf(" "); \
+				} \
+			} \
+			if (i == array_length - 1 && has_newline) { \
+				printf("\n"); \
+				for (int j = 0; j < sizeof(#array) + sizeof(" "); ++j) { \
+					printf(" "); \
+				} \
+			} \
+		} \
+		printf("}\n"); \
+	} while (0)
 
 #define NOUI_IMPLEMENTATION
 #ifdef NOUI_IMPLEMENTATION
@@ -149,7 +185,7 @@ Event event_logic() {
 		Rect square = {event_translated->pos[0], event_translated->pos[1], event_translated->width, event_translated->height};
 		bool collide = AABB_detect_point(square, mouse_pos);
 
-		if (collide && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+		if (collide && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 			event->clicked = !event->clicked;
 		}
 	}
