@@ -62,6 +62,14 @@ bool AABB_detect_point(Rect AABB, int point[2]);
 		arr[index] = value; \
 	} while (0)
 
+#define ARRAY_REMOVE(array, array_length, index) do { \
+		for (int i = index; i < array_length - 1; ++i) { \
+			array[i] = array[i + 1]; \
+		} \
+		array[array_length - 1] = 0; \
+	} while (0)
+
+
 #define ARRAY_PRINT(array, array_length, format) do { \
 		printf(#array " = {"); \
 		const int MAX_LINES = 10; \
