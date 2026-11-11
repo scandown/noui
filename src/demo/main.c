@@ -39,6 +39,7 @@ int main() {
 				  .height = 30
 
 		};
+		Event tab = {.type = TAB};
 
 		Event scrollbar = {.type = SCROLLBAR,
 				   .width = 80,
@@ -63,22 +64,17 @@ int main() {
 		} else {
 
 			event_add(scrollbar);
-			scrollbar.is_right_of = true;
-			event_add(scrollbar);
-			scrollbar.is_right_of = false;
-
-			checkbox.is_right_of = true;
 			if (event_add(checkbox).clicked) {
+				event_add(tab);
 				event_add(checkbox);
 				event_add(checkbox);
+				event_add(tab);
 			}
-
-			event_add(scrollbar);
-			checkbox.is_right_of = false;
-			event_add(checkbox);
-			event_add(scrollbar);
+			//event_add(scrollbar);
 
 		}
+		event_array_print();
+		printf("\n\n\n");
 
 
 		// drawing
@@ -86,7 +82,7 @@ int main() {
 		while (i < event_loop_number) {
 			Color colour = RED;
 			Color gizmo_colour = GREEN;
-			Event *event = &event_translated_array[i];
+			Event *event = &event_array[i];
 			switch (event->type) {
 				case WINDOW:
 					colour = GRAY;

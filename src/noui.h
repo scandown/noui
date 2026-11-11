@@ -12,7 +12,8 @@ typedef enum {
 	RADIOBOX,
 	SCROLLBAR,
 	TEXT_INPUT,
-	TEXT
+	TEXT,
+	TAB
 } Event_Type;
 
 typedef struct {
@@ -57,16 +58,16 @@ bool AABB_detect_point(Rect AABB, int point[2]);
 
 #define ARRAY_INSERT(array, array_length, index, value) do { \
 		for (int i = array_length; i > index; --i) { \
-			arr[i] = arr[i-1]; \
+			array[i] = array[i-1]; \
 		} \
-		arr[index] = value; \
+		array[index] = value; \
 	} while (0)
 
 #define ARRAY_REMOVE(array, array_length, index) do { \
 		for (int i = index; i < array_length - 1; ++i) { \
 			array[i] = array[i + 1]; \
 		} \
-		array[array_length - 1] = 0; \
+		memset(array + array_length - 1, 0, sizeof(*array)); \
 	} while (0)
 
 
@@ -112,49 +113,52 @@ void NOUI_init() {
 		event_array[i].type = DUMMY;
 	}
 }
-
-void event_update_pos() {
-	static int base_offset[2] = {0};
-	int i = event_loop_number;
-	if (event_translated_array[i].type == WINDOW) {
-		base_offset[0] = event_translated_array[i].pos[0];
-		base_offset[1] = event_translated_array[i].pos[1];
-	} else {
-		event_translated_array[i] = event_array[i];
-		event_translated_array[i].pos[0] = event_array[i].pos[0] + base_offset[0];
-		event_translated_array[i].pos[1] = event_array[i].pos[1] + base_offset[1];
-		event_translated_array[i].gizmo_pos[0] = event_array[i].gizmo_pos[0] + base_offset[0];
-		event_translated_array[i].gizmo_pos[1] = event_array[i].gizmo_pos[1] + base_offset[1];
-	}
-}
-
 Event event_add(Event event) {
-	Event dummy = {0};
-	if (event_loop_number > MAX_EVENTS - 1) {
-		fprintf(stderr, "Error: Exceeded MAX_EVENTS\n");
-		return dummy;
+	Event *current_event = &event_array[event_loop_number];
+	Event *next_event = &event_array[event_loop_number + 1];
+	Event *prev_event = &event_array[event_loop_number - 1];
+	
+	static bool insert_mode = false;
+	static int tab_count = 0;
+	static bool delete_mode = false;
+	if (event.type != current_event->type
+	    && event.type == TAB) {
+		insert_mode = true;
+		event = *prev_event;
+		event.type = TAB;
+	} else if (event.type != current_event->type
+	    && current_event->type == TAB) {
+		delete_mode = true;
+	} else if (event.type != current_event->type) {
+		event_initial = true;
 	}
 
-
-	if (event_array[event_loop_number].type != event.type) {
-		event_initial = true;	
-	}
-	if (event_initial) {
+	if (insert_mode) {
+		//ARRAY_INSERT
+		ARRAY_INSERT(event_array, MAX_EVENTS, event_loop_number, event);
+		if (event.type == TAB) {
+			tab_count++;
+			if (tab_count == 2) {
+				insert_mode = false;
+				tab_count = 0;
+			}
+		}
+	} else if (delete_mode) {
+		//ARRAY_DELETE
+		ARRAY_REMOVE(event_array, MAX_EVENTS, event_loop_number);
+		if (next_event->type == TAB) {
+			delete_mode = false;
+		}
+	} else if (event_initial) {
 		event_array[event_loop_number] = event;
 	}
 
-	if (event_array[0].type != WINDOW) {
-		fprintf(stderr, "Error: First event needs to be a window\n");
-		return dummy;
-	}
-
-	Event event_new = event_logic();
-	event_update_pos();
 	event_update_data();
+	Event new_event = event_logic();
 	event_loop_number++;
 
 
-	return event_new;
+	return new_event;
 }
 
 Event event_logic() {
@@ -166,11 +170,10 @@ Event event_logic() {
 		event_translated_array[0].pos[1] = mouse_pos[1];
 	}
 
-	Event *event_translated = &event_translated_array[event_loop_number];
 	Event *event = &event_array[event_loop_number];
 
 	if (event->type == SCROLLBAR) {
-		Rect gizmo_square = {event_translated->gizmo_pos[0], event_translated->gizmo_pos[1], event_translated->gizmo_width, event_translated->gizmo_height};
+		Rect gizmo_square = {event->gizmo_pos[0], event->gizmo_pos[1], event->gizmo_width, event->gizmo_height};
 		bool gizmo_collide = AABB_detect_point(gizmo_square, mouse_pos);
 
 		if (gizmo_collide && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
@@ -181,16 +184,16 @@ Event event_logic() {
 			} else if (event->gizmo_height == event->height) {
 				// get percentage of mouse to scrollbar
 				float percentage_along_scrollbar =
-					(float)(mouse_pos[0] - event_translated->pos[0] - event_translated->gizmo_width / 2) / event_translated->width;
+					(float)(mouse_pos[0] - event->pos[0] - event->gizmo_width / 2) / event->width;
 				percentage_along_scrollbar = NOUI_clampf(percentage_along_scrollbar, 0.0, 1.0);
-				float val = event_translated->width * percentage_along_scrollbar;
+				float val = event->width * percentage_along_scrollbar;
 				event->gizmo_pos[0] = event->pos[0] + val;
 			}
 		}
 	}
 
 	if (event->type == CHECKBOX) {
-		Rect square = {event_translated->pos[0], event_translated->pos[1], event_translated->width, event_translated->height};
+		Rect square = {event->pos[0], event->pos[1], event->width, event->height};
 		bool collide = AABB_detect_point(square, mouse_pos);
 
 		if (collide && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -198,7 +201,7 @@ Event event_logic() {
 		}
 	}
 
-	Event current_event = *event_translated;
+	Event current_event = *event;
 	return current_event;
 }
 
@@ -251,6 +254,7 @@ void event_update_data() {
 	}
 }
 
+
 void event_end() {
 	event_initial = false;
 	event_loop_number = 0;
@@ -291,6 +295,9 @@ void event_array_print() {
 				break;
 			case DUMMY:
 				type = "Dummy";
+				break;
+			case TAB:
+				type = "Tab";
 				break;
 			default:
 				type = "N/A";
