@@ -64,17 +64,18 @@ int main() {
 		} else {
 
 			event_add(scrollbar);
-			if (event_add(checkbox).clicked) {
+			Event check = event_add(checkbox);
+			static bool toggle = true;
+			if (check.clicked) {
 				event_add(tab);
 				event_add(checkbox);
 				event_add(checkbox);
 				event_add(tab);
+				toggle = false;
 			}
-			//event_add(scrollbar);
+			event_add(scrollbar);
 
 		}
-		event_array_print();
-		printf("\n\n\n");
 
 
 		// drawing
@@ -107,8 +108,8 @@ int main() {
 					colour);
 
 			if (event->type == SCROLLBAR) {
-				DrawRectangle(event->gizmo_pos[0],
-						event->gizmo_pos[1],
+				DrawRectangle(event->pos[0] + event->width * event->gizmo_x_percentage,
+						event->pos[1] + event->height * event->gizmo_y_percentage,
 						event->gizmo_width,
 						event->gizmo_height,
 						gizmo_colour);

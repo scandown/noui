@@ -26,7 +26,8 @@ typedef struct {
 typedef struct {
 	Event_Type type;
 	int pos[2];
-	int gizmo_pos[2];
+	float gizmo_x_percentage;
+	float gizmo_y_percentage;
 	int width;
 	int height;
 	int max_height;
@@ -48,9 +49,10 @@ int event_loop_number = 0;
 void NOUI_init();
 Event event_add(Event event);
 Event event_logic();
-void event_update_pos();
+void update_position();
 void event_update_data();
 void event_end();
+void event_print(Event event);
 void event_array_print();
 float NOUI_clampf(float val, float min, float max);
 
@@ -131,7 +133,12 @@ Event event_add(Event event) {
 		delete_mode = true;
 	} else if (event.type != current_event->type) {
 		event_initial = true;
+		event_print(*current_event);
+		event_print(event);
+		//printf("h\n");
 	}
+
+	bool increment = true;
 
 	if (insert_mode) {
 		//ARRAY_INSERT
@@ -146,19 +153,43 @@ Event event_add(Event event) {
 	} else if (delete_mode) {
 		//ARRAY_DELETE
 		ARRAY_REMOVE(event_array, MAX_EVENTS, event_loop_number);
-		if (next_event->type == TAB) {
+		while (current_event->type != TAB) {
+			ARRAY_REMOVE(event_array, MAX_EVENTS, event_loop_number);
+		}
+		if (current_event->type == TAB) {
+			ARRAY_REMOVE(event_array, MAX_EVENTS, event_loop_number);
 			delete_mode = false;
+			increment = false;
 		}
 	} else if (event_initial) {
 		event_array[event_loop_number] = event;
 	}
 
-	event_update_data();
-	Event new_event = event_logic();
+	Event new_event = {0};
+	update_position();
+	//event_update_data();
+	new_event = event_logic();
+	//if (new_event
 	event_loop_number++;
 
 
 	return new_event;
+}
+void update_position() {
+	int CONFIG_Y_SPACING = 50;
+	int CONFIG_X_SPACING = 10;
+	Event *event_current = &event_array[event_loop_number];
+	Event dummy = {0};
+	Event *event_prev = &dummy;
+	if (event_loop_number > 0) {
+		event_prev = &event_array[event_loop_number-1];
+	}
+
+	if (!event_prev->is_right_of) {
+		event_current->pos[1] = event_prev->pos[1] + CONFIG_Y_SPACING;
+	} else {
+		event_current->pos[0] = event_prev->pos[0] + CONFIG_X_SPACING;
+	}
 }
 
 Event event_logic() {
@@ -173,21 +204,23 @@ Event event_logic() {
 	Event *event = &event_array[event_loop_number];
 
 	if (event->type == SCROLLBAR) {
-		Rect gizmo_square = {event->gizmo_pos[0], event->gizmo_pos[1], event->gizmo_width, event->gizmo_height};
+		int gizmo_pos[2] = {event->pos[0] + event->width * event->gizmo_x_percentage,
+					event->pos[1] + event->height * event->gizmo_y_percentage};
+		Rect gizmo_square = {gizmo_pos[0], gizmo_pos[1], event->gizmo_width, event->gizmo_height};
 		bool gizmo_collide = AABB_detect_point(gizmo_square, mouse_pos);
 
 		if (gizmo_collide && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
 			if (event->gizmo_width == event->width) {
-				event->gizmo_pos[1] = mouse_pos[1] - event->gizmo_height / 2;
-				event->gizmo_pos[1] = NOUI_clampf(event->gizmo_pos[1],
-						event->pos[1], event->pos[1] + event->height - event->gizmo_height);
+				float percentage_along_scrollbar =
+					(float)(mouse_pos[1] - event->pos[1] - event->gizmo_height / 2) / event->height;
+				percentage_along_scrollbar = NOUI_clampf(percentage_along_scrollbar, 0.0, 1.0);
+				event->gizmo_y_percentage = percentage_along_scrollbar;
 			} else if (event->gizmo_height == event->height) {
 				// get percentage of mouse to scrollbar
 				float percentage_along_scrollbar =
 					(float)(mouse_pos[0] - event->pos[0] - event->gizmo_width / 2) / event->width;
 				percentage_along_scrollbar = NOUI_clampf(percentage_along_scrollbar, 0.0, 1.0);
-				float val = event->width * percentage_along_scrollbar;
-				event->gizmo_pos[0] = event->pos[0] + val;
+				event->gizmo_x_percentage = percentage_along_scrollbar;
 			}
 		}
 	}
@@ -205,54 +238,6 @@ Event event_logic() {
 	return current_event;
 }
 
-void event_update_data() {
-	int CONFIG_Y_SPACING = 10;
-	int CONFIG_X_SPACING = 10;
-	Event *event = &event_array[event_loop_number];
-	Event *event_prev = &event_array[event_loop_number-1];
-
-	if (!event_initial) {
-		return;
-	}
-
-	static int base_x = 0;
-	if (event->type == WINDOW) {
-		base_x = event->pos[0];
-	}
-
-	event->max_height = event->height;
-
-	int previous_offset_x = event_prev->pos[0];
-	int previous_offset_y = event_prev->pos[1];
-	int previous_x = 0;
-	int previous_y = 0;
-
-	if (event_prev->type != WINDOW) {
-		if (event_prev->max_height > event->max_height) {
-			event->max_height = event_prev->max_height;
-		}
-		if (event_prev->is_right_of) {
-			previous_x = event_prev->width + CONFIG_X_SPACING;
-		} else {
-			previous_offset_x = base_x;
-			previous_y = event_prev->max_height + CONFIG_Y_SPACING;
-			event->max_height = event->height;
-		}
-	}
-
-	switch (event_array[event_loop_number].type) {
-		case WINDOW:
-			break;
-		case SCROLLBAR:
-			event->gizmo_pos[0] = previous_offset_x + previous_x;
-			event->gizmo_pos[1] = previous_offset_y + previous_y;
-			// fall through
-		default:
-			event->pos[0] = previous_offset_x + previous_x;
-			event->pos[1] = previous_offset_y + previous_y;
-			break;
-	}
-}
 
 
 void event_end() {
@@ -269,44 +254,51 @@ bool AABB_detect_point(Rect AABB, int point[2]) {
 
 	return x_collide && y_collide;
 }
+void event_print(Event event) {
+	char *type;
+	switch (event.type) {
+		case WINDOW:
+			type = "Window";
+			break;
+		case CHECKBOX:
+			type = "Checkbox";
+			break;
+		case RADIOBOX:
+			type = "Radiobox";
+			break;
+		case SCROLLBAR:
+			type = "Scrollbar";
+			break;
+		case TEXT_INPUT:
+			type = "Text_Input";
+			break;
+		case TEXT:
+			type = "Text";
+			break;
+		case DUMMY:
+			type = "Dummy";
+			break;
+		case TAB:
+			type = "Tab";
+			break;
+		default:
+			type = "N/A";
+			break;
+	}
+	if (event.type == DUMMY) {
+		return;
+	}
+	printf("Event_Type = %s\n", type);
+}
 
 void event_array_print() {
 	int i = 0;
-	while (i < MAX_EVENTS) {
-		char *type;
-		switch (event_array[i].type) {
-			case WINDOW:
-				type = "Window";
-				break;
-			case CHECKBOX:
-				type = "Checkbox";
-				break;
-			case RADIOBOX:
-				type = "Radiobox";
-				break;
-			case SCROLLBAR:
-				type = "Scrollbar";
-				break;
-			case TEXT_INPUT:
-				type = "Text_Input";
-				break;
-			case TEXT:
-				type = "Text";
-				break;
-			case DUMMY:
-				type = "Dummy";
-				break;
-			case TAB:
-				type = "Tab";
-				break;
-			default:
-				type = "N/A";
-				break;
-		}
+	while (i < event_loop_number) {
+		printf("%d: ", i);
+		event_print(event_array[i]);
 		if (event_array[i].type == DUMMY) {
 			return;
 		}
-		printf("%d: Event_Type = %s\n", i, type);
 		i++;
 	}
 }
