@@ -65,13 +65,11 @@ int main() {
 
 			event_add(scrollbar);
 			Event check = event_add(checkbox);
-			static bool toggle = true;
 			if (check.clicked) {
 				event_add(tab);
 				event_add(checkbox);
 				event_add(checkbox);
 				event_add(tab);
-				toggle = false;
 			}
 			event_add(scrollbar);
 

@@ -43,7 +43,6 @@ typedef struct {
 #define MAX_EVENTS 256
 Event event_array[MAX_EVENTS] = {0};
 Event event_translated_array[MAX_EVENTS] = {0};
-bool event_initial = false;
 int event_loop_number = 0;
 
 void NOUI_init();
@@ -117,12 +116,12 @@ void NOUI_init() {
 }
 Event event_add(Event event) {
 	Event *current_event = &event_array[event_loop_number];
-	Event *next_event = &event_array[event_loop_number + 1];
 	Event *prev_event = &event_array[event_loop_number - 1];
 	
 	static bool insert_mode = false;
 	static int tab_count = 0;
 	static bool delete_mode = false;
+	bool event_initial = false;
 	if (event.type != current_event->type
 	    && event.type == TAB) {
 		insert_mode = true;
@@ -133,12 +132,7 @@ Event event_add(Event event) {
 		delete_mode = true;
 	} else if (event.type != current_event->type) {
 		event_initial = true;
-		event_print(*current_event);
-		event_print(event);
-		//printf("h\n");
 	}
-
-	bool increment = true;
 
 	if (insert_mode) {
 		//ARRAY_INSERT
@@ -159,7 +153,6 @@ Event event_add(Event event) {
 		if (current_event->type == TAB) {
 			ARRAY_REMOVE(event_array, MAX_EVENTS, event_loop_number);
 			delete_mode = false;
-			increment = false;
 		}
 	} else if (event_initial) {
 		event_array[event_loop_number] = event;
@@ -167,9 +160,7 @@ Event event_add(Event event) {
 
 	Event new_event = {0};
 	update_position();
-	//event_update_data();
 	new_event = event_logic();
-	//if (new_event
 	event_loop_number++;
 
 
@@ -241,7 +232,6 @@ Event event_logic() {
 
 
 void event_end() {
-	event_initial = false;
 	event_loop_number = 0;
 }
 
