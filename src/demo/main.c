@@ -48,6 +48,7 @@ int main() {
 				   .gizmo_height = scrollbar.height
 		};
 
+		static int val = 0;
 
 		event_add(window);
 
@@ -67,13 +68,21 @@ int main() {
 			Event check = event_add(checkbox);
 			if (check.clicked) {
 				event_add(tab);
-				event_add(checkbox);
+				if (event_add(checkbox).clicked) {
+					event_add(tab);
+					event_add(scrollbar);
+					checkbox.clicked = val;
+					val = event_add(checkbox).clicked;
+					//checkbox.clicked = false;
+					event_add(tab);
+				}
 				event_add(checkbox);
 				event_add(tab);
 			}
 			event_add(scrollbar);
 
 		}
+		printf("%d\n", val);
 
 
 		// drawing

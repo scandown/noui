@@ -47,7 +47,7 @@ int event_loop_number = 0;
 
 void NOUI_init();
 Event event_add(Event event);
-Event event_logic();
+Event event_logic(Event event_input);
 void update_position();
 void event_update_data();
 void event_end();
@@ -160,7 +160,7 @@ Event event_add(Event event) {
 
 	Event new_event = {0};
 	update_position();
-	new_event = event_logic();
+	new_event = event_logic(event);
 	event_loop_number++;
 
 
@@ -183,7 +183,7 @@ void update_position() {
 	}
 }
 
-Event event_logic() {
+Event event_logic(Event event_input) {
 	Vector2 pos = GetMousePosition();
 	int mouse_pos[] = {(int)pos.x, (int)pos.y};
 
