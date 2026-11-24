@@ -87,7 +87,6 @@ int main() {
 			event_add(scrollbar);
 
 		}
-		printf("%d\n", val);
 
 
 		// drawing
@@ -138,6 +137,7 @@ int main() {
 
 	}
 
+	event_array_free();
 
 	CloseWindow();
 

@@ -24,6 +24,13 @@ typedef struct {
 } Rect;
 
 typedef struct {
+	char *items;
+	size_t count;
+	size_t capacity;
+} String_Dynamic;
+
+
+typedef struct {
 	Event_Type type;
 	int pos[2];
 	float gizmo_x_percentage;
@@ -35,6 +42,8 @@ typedef struct {
 	int gizmo_height;
 	bool clicked;
 	bool is_right_of;
+
+	String_Dynamic str;
 } Event;
 
 
@@ -47,13 +56,17 @@ int event_loop_number = 0;
 
 void NOUI_init();
 Event event_add(Event event);
-Event event_logic(Event event_input);
+Event event_logic();
 void update_position();
 void event_update_data();
 void event_end();
+void event_array_free();
+void event_free(int index);
 void event_print(Event event);
 void event_array_print();
+
 float NOUI_clampf(float val, float min, float max);
+void DA_APPEND_STR(String_Dynamic *xs, char *string, int string_length);
 
 bool AABB_detect_point(Rect AABB, int point[2]);
 
@@ -109,6 +122,24 @@ float NOUI_clampf(float val, float min, float max) {
 	return val;
 }
 
+void DA_APPEND_STR(String_Dynamic *xs, char *string, int string_length) {
+	if (xs->count > 0 && xs->items[xs->count-1] == '\0') {
+		xs->count--;
+	}
+	for (int i = 0; i < string_length; ++i) {
+		if (xs->count >= xs->capacity) {
+			if (xs->capacity == 0) xs->capacity = 256;
+			else xs->capacity *= 2;
+			xs->items = realloc(xs->items, xs->capacity*sizeof(*xs->items));
+		}
+		xs->items[xs->count++] = string[i];
+	}
+}
+
+
+
+
+
 void NOUI_init() {
 	for (int i = 0; i < MAX_EVENTS; ++i) {
 		event_array[i].type = DUMMY;
@@ -146,6 +177,7 @@ Event event_add(Event event) {
 		}
 	} else if (delete_mode) {
 		//ARRAY_DELETE
+		event_free(event_loop_number);
 		ARRAY_REMOVE(event_array, MAX_EVENTS, event_loop_number);
 		while (current_event->type != TAB) {
 			ARRAY_REMOVE(event_array, MAX_EVENTS, event_loop_number);
@@ -155,6 +187,7 @@ Event event_add(Event event) {
 			delete_mode = false;
 		}
 	} else if (event_initial) {
+		event_free(event_loop_number);
 		event_array[event_loop_number] = event;
 	}
 
@@ -166,6 +199,19 @@ Event event_add(Event event) {
 
 	return new_event;
 }
+
+void event_array_free() {
+	for (int i = 0; i < MAX_EVENTS; ++i) {
+		event_free(i);
+	}
+}
+void event_free(int index) {
+	if (event_array[index].str.items != NULL) {
+		free(event_array[index].str.items);
+	}
+}
+
+
 void update_position() {
 	int CONFIG_Y_SPACING = 50;
 	int CONFIG_X_SPACING = 10;
@@ -183,7 +229,7 @@ void update_position() {
 	}
 }
 
-Event event_logic(Event event_input) {
+Event event_logic() {
 	Vector2 pos = GetMousePosition();
 	int mouse_pos[] = {(int)pos.x, (int)pos.y};
 
@@ -235,7 +281,13 @@ Event event_logic(Event event_input) {
 
 
 		if (event->clicked) {
-			printf("text_input box\n");
+			int key = GetCharPressed();
+			char string[2] = {0};
+			string[0] = (char)key;
+			if (key > 0) {
+				DA_APPEND_STR(&event->str, string, strlen(string) + 1);
+				printf("%s\n", event->str.items);
+			}
 		}
 	}
 
