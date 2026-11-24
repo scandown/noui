@@ -34,6 +34,11 @@ int main() {
 				.height = 300
 		};
 
+		Event text_box = {.type = TEXT_INPUT,
+				.width = 80,
+				.height = 30
+		};
+
 		Event checkbox = {.type = CHECKBOX,
 				  .width = 30,
 				  .height = 30
@@ -63,6 +68,7 @@ int main() {
 
 			event_add(scrollbar);
 		} else {
+			event_add(text_box);
 
 			event_add(scrollbar);
 			Event check = event_add(checkbox);
@@ -73,7 +79,6 @@ int main() {
 					event_add(scrollbar);
 					checkbox.clicked = val;
 					val = event_add(checkbox).clicked;
-					//checkbox.clicked = false;
 					event_add(tab);
 				}
 				event_add(checkbox);
@@ -101,6 +106,9 @@ int main() {
 					} else {
 						colour = DARKGRAY;
 					}
+					break;
+				case TEXT_INPUT:
+					colour = LIGHTGRAY;
 					break;
 				default:
 					colour = RED;

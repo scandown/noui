@@ -225,6 +225,20 @@ Event event_logic(Event event_input) {
 		}
 	}
 
+	if (event->type == TEXT_INPUT) {
+		Rect square = {event->pos[0], event->pos[1], event->width, event->height};
+		bool collide = AABB_detect_point(square, mouse_pos);
+
+		if (collide && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+			event->clicked = !event->clicked;
+		}
+
+
+		if (event->clicked) {
+			printf("text_input box\n");
+		}
+	}
+
 	Event current_event = *event;
 	return current_event;
 }
