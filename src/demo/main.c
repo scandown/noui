@@ -58,7 +58,6 @@ int main() {
 		event_add(window);
 
 		if (IsKeyDown(KEY_RIGHT)) {
-
 			event_add(checkbox);
 			checkbox.is_right_of = true;
 			event_add(checkbox);
@@ -85,7 +84,6 @@ int main() {
 				event_add(tab);
 			}
 			event_add(scrollbar);
-
 		}
 
 
@@ -127,6 +125,10 @@ int main() {
 						event->gizmo_width,
 						event->gizmo_height,
 						gizmo_colour);
+			}
+
+			if (event->type == TEXT_INPUT) {
+				DrawText(event->str.items, event->pos[0], event->pos[1], event->height, BLACK);
 			}
 			i++;
 
