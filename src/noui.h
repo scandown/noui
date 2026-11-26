@@ -281,12 +281,18 @@ Event event_logic() {
 
 
 		if (event->clicked) {
-			int key = GetCharPressed();
+			int key_letter = GetCharPressed();
+			int key = GetKeyPressed();
 			char string[2] = {0};
-			string[0] = (char)key;
-			if (key > 0) {
+			string[0] = (char)key_letter;
+			if (key_letter > 0) {
 				DA_APPEND_STR(&event->str, string, strlen(string) + 1);
-				printf("%s\n", event->str.items);
+			}
+			if (key == KEY_BACKSPACE) {
+				if (event->str.count > 0) {
+					event->str.count--;
+					event->str.items[event->str.count-1] = '\0';
+				}
 			}
 		}
 	}
