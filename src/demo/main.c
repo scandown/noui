@@ -28,6 +28,12 @@ int main() {
 
 
 		Global_config.pressed_key = GetCharPressed();
+		if (IsKeyPressed(KEY_BACKSPACE)) {
+			Global_config.pressed_key = NOUI_BACKSPACE;
+		}
+		if (IsKeyPressedRepeat(KEY_BACKSPACE)) {
+			Global_config.pressed_key = NOUI_BACKSPACE;
+		}
 
 		Event window = {.type = WINDOW,
 				.pos = {0, 0},

@@ -299,14 +299,13 @@ Event event_logic() {
 			int key_letter = Global_config.pressed_key;
 			char string[2] = {0};
 			string[0] = (char)key_letter;
-			if (key_letter > 0) {
-				DA_APPEND_STR(&event->str, string, strlen(string) + 1);
-			}
 			if (key_letter == NOUI_BACKSPACE) {
 				if (event->str.count > 0) {
 					event->str.count--;
 					event->str.items[event->str.count-1] = '\0';
 				}
+			} else if (key_letter > 0) {
+				DA_APPEND_STR(&event->str, string, strlen(string) + 1);
 			}
 		}
 	}
