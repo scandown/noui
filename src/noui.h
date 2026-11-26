@@ -16,12 +16,24 @@ typedef enum {
 	TAB
 } Event_Type;
 
+typedef enum {
+	NOUI_BACKSPACE = 8,
+	NOUI_SPACE = 32,
+	NOUI_A = 65,    NOUI_B, NOUI_C, NOUI_D, NOUI_E, NOUI_F, NOUI_G, NOUI_H,
+	NOUI_I,	NOUI_J, NOUI_K, NOUI_L, NOUI_M, NOUI_N, NOUI_O, NOUI_P, NOUI_Q,
+	NOUI_R,	NOUI_S, NOUI_T, NOUI_U, NOUI_V, NOUI_W, NOUI_X, NOUI_Y, NOUI_Z,
+} NOUI_KEYS;
+
 typedef struct {
 	int x;
 	int y;
 	int width;
 	int height;
 } Rect;
+
+typedef struct {
+	int pressed_key;
+} Config;
 
 typedef struct {
 	char *items;
@@ -45,6 +57,9 @@ typedef struct {
 
 	String_Dynamic str;
 } Event;
+
+
+Config Global_config = {0};
 
 
 
@@ -281,14 +296,13 @@ Event event_logic() {
 
 
 		if (event->clicked) {
-			int key_letter = GetCharPressed();
-			int key = GetKeyPressed();
+			int key_letter = Global_config.pressed_key;
 			char string[2] = {0};
 			string[0] = (char)key_letter;
 			if (key_letter > 0) {
 				DA_APPEND_STR(&event->str, string, strlen(string) + 1);
 			}
-			if (key == KEY_BACKSPACE) {
+			if (key_letter == NOUI_BACKSPACE) {
 				if (event->str.count > 0) {
 					event->str.count--;
 					event->str.items[event->str.count-1] = '\0';

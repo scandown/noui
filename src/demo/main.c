@@ -27,6 +27,7 @@ int main() {
 			(SCR_HEIGHT - font_height)/2, font_height, WHITE);
 
 
+		Global_config.pressed_key = GetCharPressed();
 
 		Event window = {.type = WINDOW,
 				.pos = {0, 0},
