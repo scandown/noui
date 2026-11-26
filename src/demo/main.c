@@ -128,7 +128,14 @@ int main() {
 			}
 
 			if (event->type == TEXT_INPUT) {
-				DrawText(event->str.items, event->pos[0], event->pos[1], event->height, BLACK);
+
+				int font_size = event->height;
+				int text_offset = MeasureText(event->str.items, font_size);
+				int text_x = event->pos[0] + (event->width - text_offset);
+
+				BeginScissorMode(event->pos[0], event->pos[1], event->width, event->height);
+				DrawText(event->str.items, text_x, event->pos[1], font_size, BLACK);
+				EndScissorMode();
 			}
 			i++;
 
