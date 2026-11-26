@@ -59,6 +59,9 @@ typedef struct {
 
 	String_Dynamic str;
 	int cursor_x;
+	int cursor_offset;
+	int previous_character_width;
+
 } Event;
 
 
@@ -299,17 +302,16 @@ Event event_logic() {
 
 
 		if (event->clicked) {
+			char string[2] = {0};
 			int key_letter = Global_config.pressed_key;
+			string[0] = (char)key_letter;
 
 			if (key_letter == NOUI_KEY_RIGHT) {
 				event->cursor_x++;
 			} else if (key_letter == NOUI_KEY_LEFT) {
-				event->cursor_x--;
-			}
-
-			char string[2] = {0};
-			string[0] = (char)key_letter;
-			if (key_letter == NOUI_BACKSPACE) {
+				event->cursor_x -= event->previous_character_width;
+				event->cursor_offset--;
+			} else if (key_letter == NOUI_BACKSPACE) {
 				if (event->str.count > 0) {
 					event->str.count--;
 					event->str.items[event->str.count-1] = '\0';

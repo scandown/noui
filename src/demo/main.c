@@ -43,7 +43,7 @@ int main() {
 		};
 
 		Event text_box = {.type = TEXT_INPUT,
-				.width = 80,
+				.width = 180,
 				.height = 30
 		};
 
@@ -83,9 +83,6 @@ int main() {
 			event_add(tab);
 		}
 		event_add(scrollbar);
-
-
-		printf("%d\n", text_event.cursor_x);
 
 
 		// drawing
@@ -131,6 +128,31 @@ int main() {
 			if (event->type == TEXT_INPUT) {
 				int font_size = event->height;
 				int text_width = MeasureText(event->str.items, font_size);
+				
+				char last_char_str[2] = {0};
+				char text_char_gap_str[3] = {0};
+
+				int last_char_width = 0;
+				if (event->str.count > 1) {
+					last_char_str[0] = event->str.items[event->str.count-2 + event->cursor_offset];
+					last_char_width = MeasureText(last_char_str, font_size);
+
+					int text_char_gap = 0;
+					if (event->str.count > 2) {
+						last_char_str[0] = event->str.items[event->str.count-3 + event->cursor_offset];
+						int second_last_char_width = MeasureText(last_char_str, font_size);
+
+						text_char_gap_str[0] = event->str.items[event->str.count-3 + event->cursor_offset];
+						text_char_gap_str[1] = event->str.items[event->str.count-2 + event->cursor_offset];
+
+						text_char_gap = MeasureText(text_char_gap_str, font_size);
+						text_char_gap -= last_char_width;
+						text_char_gap -= second_last_char_width;
+					}
+
+					event->previous_character_width = last_char_width + text_char_gap;
+				}
+
 				int text_offset = event->width - text_width;
 				if (text_offset > 0) {
 					text_offset = 0;
@@ -145,7 +167,7 @@ int main() {
 				int cursor_width = 10;
 				int cursor_height = event->height;
 				Color cursor_colour = DARKGRAY;
-				DrawRectangle(text_x + text_width, event->pos[1], cursor_width, cursor_height, cursor_colour);
+				DrawRectangle(text_x + text_width + event->cursor_x, event->pos[1], cursor_width, cursor_height, cursor_colour);
 			}
 			i++;
 
