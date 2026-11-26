@@ -22,6 +22,8 @@ typedef enum {
 	NOUI_A = 65,    NOUI_B, NOUI_C, NOUI_D, NOUI_E, NOUI_F, NOUI_G, NOUI_H,
 	NOUI_I,	NOUI_J, NOUI_K, NOUI_L, NOUI_M, NOUI_N, NOUI_O, NOUI_P, NOUI_Q,
 	NOUI_R,	NOUI_S, NOUI_T, NOUI_U, NOUI_V, NOUI_W, NOUI_X, NOUI_Y, NOUI_Z,
+
+	NOUI_KEY_RIGHT = 262, NOUI_KEY_LEFT, NOUI_KEY_UP, NOUI_KEY_DOWN
 } NOUI_KEYS;
 
 typedef struct {
@@ -56,6 +58,7 @@ typedef struct {
 	bool is_right_of;
 
 	String_Dynamic str;
+	int cursor_x;
 } Event;
 
 
@@ -297,6 +300,13 @@ Event event_logic() {
 
 		if (event->clicked) {
 			int key_letter = Global_config.pressed_key;
+
+			if (key_letter == NOUI_KEY_RIGHT) {
+				event->cursor_x++;
+			} else if (key_letter == NOUI_KEY_LEFT) {
+				event->cursor_x--;
+			}
+
 			char string[2] = {0};
 			string[0] = (char)key_letter;
 			if (key_letter == NOUI_BACKSPACE) {

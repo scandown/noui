@@ -28,11 +28,12 @@ int main() {
 
 
 		Global_config.pressed_key = GetCharPressed();
-		if (IsKeyPressed(KEY_BACKSPACE)) {
+		if (IsKeyPressed(KEY_BACKSPACE) || IsKeyPressedRepeat(KEY_BACKSPACE)) {
 			Global_config.pressed_key = NOUI_BACKSPACE;
-		}
-		if (IsKeyPressedRepeat(KEY_BACKSPACE)) {
-			Global_config.pressed_key = NOUI_BACKSPACE;
+		} else if (IsKeyPressed(KEY_LEFT) || IsKeyPressedRepeat(KEY_LEFT)) {
+			Global_config.pressed_key = NOUI_KEY_LEFT;
+		} else if (IsKeyPressed(KEY_RIGHT) || IsKeyPressedRepeat(KEY_RIGHT)) {
+			Global_config.pressed_key = NOUI_KEY_RIGHT;
 		}
 
 		Event window = {.type = WINDOW,
@@ -64,34 +65,27 @@ int main() {
 
 		event_add(window);
 
-		if (IsKeyDown(KEY_RIGHT)) {
-			event_add(checkbox);
-			checkbox.is_right_of = true;
-			event_add(checkbox);
-			checkbox.is_right_of = false;
-			event_add(checkbox);
-			event_add(checkbox);
+		Event text_event = {0};
+		text_event = event_add(text_box);
 
-			event_add(scrollbar);
-		} else {
-			event_add(text_box);
-
-			event_add(scrollbar);
-			Event check = event_add(checkbox);
-			if (check.clicked) {
+		event_add(scrollbar);
+		Event check = event_add(checkbox);
+		if (check.clicked) {
+			event_add(tab);
+			if (event_add(checkbox).clicked) {
 				event_add(tab);
-				if (event_add(checkbox).clicked) {
-					event_add(tab);
-					event_add(scrollbar);
-					checkbox.clicked = val;
-					val = event_add(checkbox).clicked;
-					event_add(tab);
-				}
-				event_add(checkbox);
+				event_add(scrollbar);
+				checkbox.clicked = val;
+				val = event_add(checkbox).clicked;
 				event_add(tab);
 			}
-			event_add(scrollbar);
+			event_add(checkbox);
+			event_add(tab);
 		}
+		event_add(scrollbar);
+
+
+		printf("%d\n", text_event.cursor_x);
 
 
 		// drawing
@@ -135,14 +129,23 @@ int main() {
 			}
 
 			if (event->type == TEXT_INPUT) {
-
 				int font_size = event->height;
-				int text_offset = MeasureText(event->str.items, font_size);
-				int text_x = event->pos[0] + (event->width - text_offset);
+				int text_width = MeasureText(event->str.items, font_size);
+				int text_offset = event->width - text_width;
+				if (text_offset > 0) {
+					text_offset = 0;
+				}
+				int text_x = event->pos[0] + text_offset;
 
 				BeginScissorMode(event->pos[0], event->pos[1], event->width, event->height);
 				DrawText(event->str.items, text_x, event->pos[1], font_size, BLACK);
 				EndScissorMode();
+
+				// cursor
+				int cursor_width = 10;
+				int cursor_height = event->height;
+				Color cursor_colour = DARKGRAY;
+				DrawRectangle(text_x + text_width, event->pos[1], cursor_width, cursor_height, cursor_colour);
 			}
 			i++;
 
