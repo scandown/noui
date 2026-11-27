@@ -39,8 +39,8 @@ typedef struct {
 
 typedef struct {
 	char *items;
-	size_t count;
-	size_t capacity;
+	int count;
+	int capacity;
 } String_Dynamic;
 
 
@@ -60,8 +60,6 @@ typedef struct {
 	String_Dynamic str;
 	int cursor_x;
 	int cursor_offset;
-	int previous_character_width;
-
 } Event;
 
 
@@ -306,11 +304,59 @@ Event event_logic() {
 			int key_letter = Global_config.pressed_key;
 			string[0] = (char)key_letter;
 
+			if (event->str.count - 1 + event->cursor_offset == 0
+			    && key_letter < NOUI_KEY_LEFT) {
+				int font_size = event->height;
+				int text_width = MeasureText(event->str.items, font_size);
+
+				char next_char_str[2] = {0};
+				char next_char = event->str.items[event->str.count-1 + event->cursor_offset];
+				next_char_str[0] = next_char;
+				int next_char_width = MeasureText(next_char_str, font_size);
+				int current_key_width = MeasureText(string, font_size);
+
+				char gap_string[3] = {0};
+				gap_string[0] = string[0];
+				gap_string[1] = next_char;
+
+				int gap_width = MeasureText(gap_string, font_size) - next_char_width - current_key_width;
+
+				if (gap_width > 0) {
+					if (event->cursor_offset < 0 && event->str.count - 1 > 0) {
+						event->cursor_x -= gap_width;
+					}
+				}
+			}
+
 			if (key_letter == NOUI_KEY_RIGHT) {
 				event->cursor_x++;
 			} else if (key_letter == NOUI_KEY_LEFT) {
-				event->cursor_x -= event->previous_character_width;
-				event->cursor_offset--;
+				if (event->str.count - 1 + event->cursor_offset > 0) {
+					int font_size = event->height;
+					int text_width = MeasureText(event->str.items, font_size);
+
+					char last_char = event->str.items[event->str.count-2 + event->cursor_offset];
+					char last_char_str[2] = {0};
+					last_char_str[0] = last_char;
+					int last_char_width = MeasureText(last_char_str, font_size);
+					int text_char_gap = 0;
+					if (event->str.count-3 + event->cursor_offset >= 0) {
+						char last_last_char = event->str.items[event->str.count-3 + event->cursor_offset];
+						last_char_str[0] = last_last_char;
+						int last_last_char_width = MeasureText(last_char_str, font_size);
+
+						char text_char_gap_str[3] = {0};
+						text_char_gap_str[0] = last_last_char;
+						text_char_gap_str[1] = last_char;
+
+						text_char_gap = MeasureText(text_char_gap_str, font_size);
+						text_char_gap -= last_last_char_width + last_char_width;
+					}
+
+
+					event->cursor_x -= last_char_width + text_char_gap;
+					event->cursor_offset--;
+				}
 			} else if (key_letter == NOUI_BACKSPACE) {
 				if (event->str.count > 0) {
 					event->str.count--;
